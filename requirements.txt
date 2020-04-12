@@ -1,0 +1,4 @@
+PyOpenGL
+PyOpenGL_accelerate
+numpy
+Pillow
