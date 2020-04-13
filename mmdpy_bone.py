@@ -123,9 +123,6 @@ class mmdpyBone:
         target_matrix[3, :3] = list(target)
         for _ in range(loop_size):  # ik step
             for c in chain:
-                # p = c.parent
-                # if p is None:
-                #     p = c
                 effector_matrix = c.updateMatrix()
                 inv_coord = np.linalg.inv(effector_matrix)
 

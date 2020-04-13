@@ -74,7 +74,6 @@ def adjust(self):
         ik.bone_to = self.bones[i.bone_to]
         ik.child_bones = []
         for c in i.child_bone_id:
-            # self.bones[c].ik_rotatable_control = lambda b, axis, rot: (b.rot(axis, rot) if np.fmod(np.abs(rot), np.pi) < weight else None)
             self.bones[c].ik_rotatable_control = lambda b, axis, rot: (b.rot(axis, rot * b.weight))
             self.bones[c].ik = i
             ik.child_bones.append(self.bones[c])
