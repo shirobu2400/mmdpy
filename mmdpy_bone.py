@@ -6,10 +6,11 @@ def normalize(v):
     return v / (nor + 1e-32)
 
 class mmdpyBone:
-    def __init__(self, index, bone_type, name, position, ik_rotatable_control):
+    def __init__(self, index, bone_type, name, position, weight, ik_rotatable_control):
         self.id = index
         self.type = bone_type
         self.name = name
+        self.weight = weight
 
         self.top_position = np.array(position)
         self.end_position = np.array(position)  # 初期は方向無し
@@ -116,13 +117,15 @@ class mmdpyBone:
                 if parent is None:
                     break
                 chain.append(parent)
-        # print([c.name for c in chain])
         effect_bone = self
 
         target_matrix = np.identity(4)
         target_matrix[3, :3] = list(target)
         for _ in range(loop_size):  # ik step
             for c in chain:
+                # p = c.parent
+                # if p is None:
+                #     p = c
                 effector_matrix = c.updateMatrix()
                 inv_coord = np.linalg.inv(effector_matrix)
 
@@ -146,7 +149,6 @@ class mmdpyBone:
                 axis = np.cross(local_effect_pos, local_target_pos)
 
                 # 回転制御付き回転
-                # c.rot(axis, rot)
                 c.ik_rotatable_control(c, axis, rot)
 
         return self

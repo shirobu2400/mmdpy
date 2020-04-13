@@ -27,7 +27,7 @@ class mmdpyModel:
         self.name2bone = {}
 
         for bi in data.bones:
-            b = mmdpy_bone.mmdpyBone(bi.id, bi.bone_type, bi.name, bi.position, bi.ik_rotatable_control)
+            b = mmdpy_bone.mmdpyBone(bi.id, bi.bone_type, bi.name, bi.position, bi.weight, bi.ik_rotatable_control)
             self.bones.append(b)
         for b, bi in zip(self.bones, data.bones):
             b.setParentBone(self.bones[bi.parent_id])

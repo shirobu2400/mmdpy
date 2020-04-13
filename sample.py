@@ -55,6 +55,7 @@ def display():
     # glRotatef(RotationAxis[1], 0, 1, 0)
 
     if model is not None:
+        # model.bone("左手首").move([0, 100, 0], depth=5)
         model.draw()
 
     glPopMatrix()
@@ -70,7 +71,7 @@ def display():
 def timer(value):
     glutTimerFunc(1000 // FPS, timer, value + 1)
     if model is not None:
-        model.motion("vmd").step(it=2)
+        model.motion("vmd").step(it=4)
     fps_calc.show()
     glutPostRedisplay()
 
@@ -124,7 +125,7 @@ def init(width, height, model_name, motion_name):
     if model_name is not None and not model.load(model_name):
         print("model load error.")
         exit(0)
-    model.bonetree()
+    # model.bonetree()
 
     if motion_name is not None and not model.motion("vmd").load(motion_name):
         print("motion load error.")

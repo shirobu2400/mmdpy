@@ -56,18 +56,10 @@ def adjust(self):
         b = bb
         b.id = i
         b.name = b.name.replace("\x00", "")
+        b.weight = 1.00
 
         # 回転制御
-        b.ik_rotatable_control = lambda b, axis, rot: b.rot(axis, rot)  # if np.abs(rot) < 0.25 else None
-        if "ひざ" == b.name[1:]:
-            def knee_control(b, axis, rot):
-                v = np.matmul(b.rot(axis, rot, update_flag=False), np.array([0, 0, 1, 1]))
-                if v[1] < 0.05:
-                    return
-                b.rot(axis, rot)
-
-            b.ik_rotatable_control = knee_control
-
+        b.ik_rotatable_control = lambda b, axis, rot: b.rot(axis, rot)
         self.bones.append(b)
 
     # # 親の設定 IK, bone...
@@ -82,9 +74,17 @@ def adjust(self):
         ik.bone_to = self.bones[i.bone_to]
         ik.child_bones = []
         for c in i.child_bone_id:
+            # self.bones[c].ik_rotatable_control = lambda b, axis, rot: (b.rot(axis, rot) if np.fmod(np.abs(rot), np.pi) < weight else None)
+            self.bones[c].ik_rotatable_control = lambda b, axis, rot: (b.rot(axis, rot * b.weight))
+            self.bones[c].ik = i
             ik.child_bones.append(self.bones[c])
         self.iks.append(ik)
 
+    def knee_control(b, axis, rot):
+        v = np.matmul(b.rot(axis, rot, update_flag=False), np.array([0, 0, 1, 1]))
+        if v[1] < b.weight:
+            return
+        b.rot(axis, rot)
     for b in self.bones:
         ik = [ik for ik in self.iks if ik.bone_me.name == b.name]
         b.ik = None
@@ -99,5 +99,12 @@ def adjust(self):
         ikt.weight = ik.weight
         ikt.child_bones = ik.child_bones
         b.ik = ikt
+
+        for c in b.ik.child_bones:
+            c.weight = ik.weight
+
+    for b in self.bones:
+        if "ひざ" in b.name:
+            b.ik_rotatable_control = knee_control
 
     return True
