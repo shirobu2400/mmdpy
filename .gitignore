@@ -2,6 +2,7 @@
 .mypy_cache
 .vscode
 __pycache__
+mmdpy.egg-info
 
 glut32.dll
 install.sh
