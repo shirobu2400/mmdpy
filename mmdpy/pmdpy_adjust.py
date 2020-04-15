@@ -3,8 +3,8 @@ import struct
 import os
 import types
 import numpy as np
-import mmdpy_root
-import mmdpy_texture
+from . import mmdpy_root
+from . import mmdpy_texture
 
 
 # #### #### PMD Adjuster #### ####

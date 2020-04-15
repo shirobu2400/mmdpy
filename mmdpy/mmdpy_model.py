@@ -1,9 +1,9 @@
 import copy
 
-import mmdpy_root
-import mmdpy_mesh
-import mmdpy_shader
-import mmdpy_bone
+from . import mmdpy_root
+from . import mmdpy_mesh
+from . import mmdpy_shader
+from . import mmdpy_bone
 
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 

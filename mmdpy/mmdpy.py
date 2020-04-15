@@ -4,12 +4,10 @@
 # #### #### #### #### #### #### #### ####
 
 import os
-import pmdpy
-import mmdpy_model
-import mmdpy_motion
-import vmd
-import numpy as np
-
+from . import pmdpy
+from . import mmdpy_model
+from . import mmdpy_motion
+from . import vmd
 
 class motion:
     def __init__(self, model):
@@ -101,7 +99,6 @@ class model:
     def motion(self, name):
         if not self.runnable:
             return self
-
         if not name in self.motion_data:
             self.motion_data[name] = motion(self.model)
         return self.motion_data[name]

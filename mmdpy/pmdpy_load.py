@@ -1,6 +1,6 @@
 import struct
 import os
-import mmdpy_root
+from . import mmdpy_root
 
 
 # #### #### PMD Loader #### ####

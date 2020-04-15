@@ -1,5 +1,6 @@
 .gitignore
 .mypy_cache
+.vscode
 __pycache__
 
 glut32.dll

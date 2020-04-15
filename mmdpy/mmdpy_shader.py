@@ -1,4 +1,4 @@
-import mmdpy_root
+from . import mmdpy_root
 import OpenGL
 OpenGL.ERROR_ON_COPY = True
 from OpenGL.GL import *

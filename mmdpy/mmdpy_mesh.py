@@ -4,7 +4,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 from OpenGL.GL.shaders import *
-import numpy as np, mmdpy_shader
+import numpy as np
+from . import mmdpy_shader
 
 class mmdpyMesh:
 

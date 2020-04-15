@@ -1,6 +1,5 @@
 import numpy as np
 
-
 class mmdpyMotionFrame:
     def __init__(self, bone, frame):
         self.bone = bone

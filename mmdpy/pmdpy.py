@@ -1,8 +1,8 @@
 import struct
 import os
 import types
-import pmdpy_load
-import pmdpy_adjust
+from . import pmdpy_load
+from . import pmdpy_adjust
 
 class mmdpyPmd:
 

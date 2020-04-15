@@ -2,9 +2,8 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 from OpenGL.GLUT import *
 import sys
-import time, sys
+import time
 import queue
-
 import mmdpy
 
 class fpsCalculator:
