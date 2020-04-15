@@ -6,3 +6,5 @@ __license__      = 'MIT'
 __author__       = 'shirobu2400'
 __author_email__ = 'shirobuwq2400kskm@gmail.com'
 __url__          = 'https://github.com/shirobu2400/mmdpy'
+
+__all__         = [model]

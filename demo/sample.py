@@ -26,14 +26,6 @@ RotationAxis = [0, 0, 0]
 FPS = 60
 fps_calc = fpsCalculator()
 
-def IdentityMatrix():
-    m = [0] * 16
-    m[ 0] = 1
-    m[ 5] = 1
-    m[10] = 1
-    m[15] = 1
-    return m
-
 def display():
     """ display """
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
