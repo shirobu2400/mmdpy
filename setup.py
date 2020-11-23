@@ -12,5 +12,7 @@ setup(
     install_requires=[  "PyOpenGL",
                         "PyOpenGL_accelerate",
                         "numpy",
+                        "numpy-quaternion",
+                        "pybullet",
                         "Pillow"]
 )

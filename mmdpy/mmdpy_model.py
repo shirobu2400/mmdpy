@@ -4,7 +4,7 @@ from . import mmdpy_root
 from . import mmdpy_mesh
 from . import mmdpy_shader
 from . import mmdpy_bone
-
+# from . import mmdpy_physics
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 
 
@@ -41,6 +41,12 @@ class mmdpyModel:
                 b.ik.child_bones = [self.getBoneByName(b.name) for b in b.ik.child_bones]
                 b.ik.bone_me = self.getBoneByName(b.ik.bone_me.name)
                 b.ik.bone_to = self.getBoneByName(b.ik.bone_to.name)
+
+    def createPhysics(self, physics_flag, bones, bodies, joints):
+        # physics
+        self.physics = None
+        # if physics_flag:
+        #     self.physics = mmdpy_physics.mmdpyPhysics(bones, bodies, joints)
 
     def getBone(self, index=0):
         return self.bones[index]

@@ -1,4 +1,5 @@
 import numpy as np
+import quaternion
 
 
 def normalize(v):
@@ -99,6 +100,24 @@ class mmdpyBone:
     def getPosition(self):
         return self.global_matrix[3, 0: 3]
 
+    def setPosition(self, p):
+        self.global_matrix[3, 0: 3] = p
+        return p
+
+    # quaternion
+    def getQuaternion(self):
+        # q = quaternion.from_rotation_matrix(self.updateMatrix()[0 :3, 0 :3])
+        q = quaternion.from_rotation_matrix(self.global_matrix[:3, :3])
+        q = quaternion.as_float_array(q)
+        q = normalize(q)
+        return q
+
+    def setQuaternion(self, q):
+        q = quaternion.as_quat_array(q)
+        q = quaternion.as_rotation_matrix(q)
+        self.global_matrix[:3, :3] = q
+        return self.global_matrix
+
     # スライドさせる
     def slide(self, p):
         matrix = np.identity(4)
@@ -109,6 +128,10 @@ class mmdpyBone:
 
     # ik 付き
     def move(self, target, chain=None, loop_size=1, depth=1):
+        loop_range = 3
+        if loop_size > loop_range:
+            loop_size = loop_range
+
         if chain is None:
             chain = []
             parent = self

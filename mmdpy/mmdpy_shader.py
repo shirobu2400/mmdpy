@@ -155,7 +155,7 @@ class mmdpyShader:
                 ShareColor = InputColor;
 
             }
-        """ % MMDPY_MATERIAL_USING_BONE_NUM
+        """ % (MMDPY_MATERIAL_USING_BONE_NUM)
 
         fragment_shader_src = """
             #version 110

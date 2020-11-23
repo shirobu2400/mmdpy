@@ -6,6 +6,7 @@ import time
 import queue
 import mmdpy
 
+
 class fpsCalculator:
     def __init__(self, length=30):
         self.time_queue = queue.Queue(maxsize=length)
@@ -32,26 +33,21 @@ def display():
     glMatrixMode(GL_MODELVIEW)
     glLoadIdentity()
 
-    ##set camera
+    ## set camera
     # gluLookAt(0.0, 10.0, 80.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0)
     gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
 
-    # ##draw a teapot
-    # glColor3f(0.0, 0.0, 0.0)
-
-    glPushMatrix()
     """  /**** **** **** **** **** **** **** ****/  """
-
-    # glRotatef(RotationAxis[0], 1, 0, 0)
-    # glRotatef(RotationAxis[1], 0, 1, 0)
+    glPushMatrix()
 
     if model is not None:
-        # model.bone("左手首").move([0, 100, 0], depth=5)
         model.draw()
 
     glPopMatrix()
-
     """  /**** **** **** **** **** **** **** ****/  """
+    # ##draw a teapot
+    # glColor3f(0.0, 0.0, 0.0)
+
     # glPushMatrix()
     # glutSolidTeapot(2)  # solid
     # glPopMatrix()
@@ -59,10 +55,10 @@ def display():
     glFlush()  # enforce OpenGL command
     glutSwapBuffers()
 
-def timer(value):
-    glutTimerFunc(1000 // FPS, timer, value + 1)
+def event(value):
+    glutTimerFunc(1000 // FPS, event, value + 1)
     if model is not None:
-        model.motion("vmd").step(it=4)
+        model.motion("vmd").step()
     fps_calc.show()
     glutPostRedisplay()
 
@@ -130,35 +126,19 @@ def main():
     glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH)
     glutInitWindowSize(window_width, window_height)         # window size
     glutInitWindowPosition(100, 100)                        # window position
-    glutCreateWindow(b"mmdpy")                              # show window
+    glutCreateWindow("mmdpy")                               # show window
     glutDisplayFunc(display)                                # draw callback function
     # glutIdleFunc(display)
     glutReshapeFunc(reshape)                                # resize callback function
 
-    init(window_width, window_height, argv_find(sys.argv, "-p"), argv_find(sys.argv, "-v"))
-
-    glutTimerFunc(1000 // FPS, timer, 0)
-    glutMainLoop()
-
-def debug(model_name, motion_name):
-    window_width  = 600
-    window_height = 600
-
-    glutInit(sys.argv)
-    glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE | GLUT_DEPTH)
-    glutInitWindowSize(window_width, window_height)         # window size
-    glutInitWindowPosition(100, 100)                        # window position
-    glutCreateWindow(b"mmdpy")                              # show window
-    glutDisplayFunc(display)                                # draw callback function
-    # glutIdleFunc(display)
-    glutReshapeFunc(reshape)                                # resize callback function
-
+    model_name = argv_find(sys.argv, "-p")
+    motion_name = argv_find(sys.argv, "-v")
+    print(model_name)
+    print(motion_name)
     init(window_width, window_height, model_name, motion_name)
 
-    glutTimerFunc(1000 // FPS, timer, 0)
+    glutTimerFunc(1000 // FPS, event, 0)
     glutMainLoop()
 
 if __name__ == '__main__':
-    # main()
-    # debug("miku/miku.pmd", None)
-    debug("gumi/gumi.pmd", "world_is_mine.vmd")
+    main()

@@ -9,6 +9,7 @@ from . import mmdpy_model
 from . import mmdpy_motion
 from . import vmd
 
+
 class motion:
     def __init__(self, model):
         self.motion_data = vmd.mmdpyVmd()
@@ -62,6 +63,7 @@ class model:
         self.updateBone()
         for b in self.model.bones:
             b.initUpdateMatrix()
+        self.model.createPhysics(self.data.physics_flag, self.model.bones, self.data.physics.body, self.data.physics.joint)
 
         self.runnable = True
         return True
@@ -73,16 +75,26 @@ class model:
             b.updateMatrix(count_flag=True)
         for b in self.model.bones:
             b.initUpdateMatrix()
+        return self
 
     def ik(self, ik_flag=True):
         if not self.runnable:
             return self
         if not ik_flag:
-            return
+            return self
         for b in [x for x in self.model.bones if x.ik is not None]:
             b.initUpdateMatrix()
             target = b.updateMatrix()[3, :3]
             b.ik.bone_to.move(target, chain=b.ik.child_bones, loop_size=b.ik.it)
+        return self
+
+    def physics(self, dt=33):
+        if not self.runnable:
+            return self
+        if self.model.physics is None:
+            return self
+        self.model.physics.run()
+        return self
 
     # 表示
     # 適応させるモーションがある場合 motio に入れる
@@ -92,6 +104,7 @@ class model:
 
         self.updateBone()
         self.ik()
+        # self.physics()
         self.model.draw()
         return self
 

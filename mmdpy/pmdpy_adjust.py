@@ -106,4 +106,10 @@ def adjust(self):
         if "ひざ" in b.name:
             b.ik_rotatable_control = knee_control
 
+    # #### #### Physics #### ####
+    if self.physics_flag:
+        for r in self.physics.body:
+            r.bone = self.bone[r.bone_id]
+            r.pos = np.array(r.bone.position) + np.array(r.pos)
+
     return True
