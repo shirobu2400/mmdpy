@@ -1,5 +1,5 @@
 import numpy as np
-import quaternion
+# import quaternion
 
 
 def normalize(v):
@@ -104,19 +104,19 @@ class mmdpyBone:
         self.global_matrix[3, 0: 3] = p
         return p
 
-    # quaternion
-    def getQuaternion(self):
-        # q = quaternion.from_rotation_matrix(self.updateMatrix()[0 :3, 0 :3])
-        q = quaternion.from_rotation_matrix(self.global_matrix[:3, :3])
-        q = quaternion.as_float_array(q)
-        q = normalize(q)
-        return q
+    # # quaternion
+    # def getQuaternion(self):
+    #     # q = quaternion.from_rotation_matrix(self.updateMatrix()[0 :3, 0 :3])
+    #     q = quaternion.from_rotation_matrix(self.global_matrix[:3, :3])
+    #     q = quaternion.as_float_array(q)
+    #     q = normalize(q)
+    #     return q
 
-    def setQuaternion(self, q):
-        q = quaternion.as_quat_array(q)
-        q = quaternion.as_rotation_matrix(q)
-        self.global_matrix[:3, :3] = q
-        return self.global_matrix
+    # def setQuaternion(self, q):
+    #     q = quaternion.as_quat_array(q)
+    #     q = quaternion.as_rotation_matrix(q)
+    #     self.global_matrix[:3, :3] = q
+    #     return self.global_matrix
 
     # スライドさせる
     def slide(self, p):
