@@ -175,22 +175,22 @@ def load(self, filename):
         print(self.english_head["comment"])
 
         # bone name
-        self.bone["en_name"] = []
-        for _ in range(self.bone_size):
+        self.bone_name_eng = []
+        for _ in range(len(self.bone)):
             en_name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-            self.bone["en_name"].append(en_name)
+            self.bone_name_eng.append(en_name)
 
         # skin name
-        self.skin["en_name"] = []
-        for _ in range(self.skin_size - 1):
+        self.skin_name_eng = []
+        for _ in range(len(self.skin) - 1):
             en_name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-            self.skin["en_name"].append(en_name)
+            self.skin_name_eng.append(en_name)
 
         # bone disp name
-        self.bone_disp["en_name"] = []
-        for _ in range(self.bone_disp_size):
+        self.bone_disp_name_eng = []
+        for _ in range(len(self.bone_frame_name)):
             en_name = padding_erase(struct.unpack_from("50s", fp.read(50))[0].decode("cp932", "ignore"), 'f8')
-            self.bone_disp["en_name"].append(en_name)
+            self.bone_disp_name_eng.append(en_name)
 
     # #### #### Toon-name #### ####
     self.toon_name = []

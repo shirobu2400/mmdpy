@@ -141,6 +141,7 @@ class mmdpyShader:
             attribute   vec4    BoneWeights;
             attribute   vec4    BoneIndices;
             uniform     mat4    BoneMatrix[%d];
+
             void main( void )
             {
                 mat4            skinTransform;
@@ -153,7 +154,6 @@ class mmdpyShader:
                 gl_Position = ProjectionMatrix * skinTransform * vec4( Vertex, 1.00 );
                 ShareUV = InputUV;
                 ShareColor = InputColor;
-
             }
         """ % (MMDPY_MATERIAL_USING_BONE_NUM)
 
@@ -164,6 +164,7 @@ class mmdpyShader:
             varying     vec4        ShareColor;
             uniform     float       IsTexture;
             uniform     float       Alpha;
+
             void main( void )
             {
                 vec4    color = texture2D( Texture01, ShareUV );

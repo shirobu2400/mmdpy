@@ -5,6 +5,7 @@ import sys
 import time
 import queue
 import mmdpy
+import argparse
 
 
 class fpsCalculator:
@@ -20,7 +21,7 @@ class fpsCalculator:
         elapsed_time = (time.time() - top_time) / self.length
         if elapsed_time < 1e-8:
             return
-        print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
+        # print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
 
 model = None
 RotationAxis = [0, 0, 0]
@@ -69,14 +70,6 @@ def reshape(width, height):
     glLoadIdentity()
     gluPerspective(45.0, float(width) / float(height), 0.10, 160.0)
 
-def argv_find(argv, option):
-    for i in range(len(argv)):
-        if argv[i] == option:
-            if i + 1 < len(argv):
-                return argv[i+1]
-            return argv[i]
-    return None
-
 def init(width, height, model_name, motion_name):
     """ initialize """
     glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -112,7 +105,7 @@ def init(width, height, model_name, motion_name):
     if model_name is not None and not model.load(model_name):
         print("model load error.")
         exit(0)
-    # model.bonetree()
+    model.bonetree()
 
     if motion_name is not None and not model.motion("vmd").load(motion_name):
         print("motion load error.")
@@ -131,8 +124,13 @@ def main():
     # glutIdleFunc(display)
     glutReshapeFunc(reshape)                                # resize callback function
 
-    model_name = argv_find(sys.argv, "-p")
-    motion_name = argv_find(sys.argv, "-v")
+    parser = argparse.ArgumentParser(description="MMD model viewer sample.")
+    parser.add_argument("-p", type=str, help="MMD model file name.")
+    parser.add_argument("-v", type=str, help="MMD motion file name.")
+    args = parser.parse_args()
+
+    model_name = args.p
+    motion_name = args.v
     print(model_name)
     print(motion_name)
     init(window_width, window_height, model_name, motion_name)

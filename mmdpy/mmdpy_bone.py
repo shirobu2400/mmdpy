@@ -79,16 +79,24 @@ class mmdpyBone:
         self.update_matrix_count = 0
 
     # ボーン構造表示
-    def printChilds(self, indent=0):
-        if indent > 32:
+    def printChilds(self, indent="", last_flag=False):
+        if len(indent) > 32:
             print("/**** **** **** **** [ERROR] **** **** **** ****/")
             print(self.name)
             print("/**** **** **** **** [ERROR] **** **** **** ****/")
             raise RecursionError
 
-        print("  " * indent + "{0}:".format(self.id) + "{0}".format(self.name))
-        for c in self.child_bones:
-            c.printChilds(indent=indent + 1)
+        my_indent = "┃ "
+        tree_string = "┣ "
+        if last_flag:
+            my_indent = "  "
+            tree_string = "┗ "
+        if indent == "":
+            my_indent = "  "
+            tree_string = "  "
+        print(indent + tree_string + "{0}:".format(self.id) + "{0}".format(self.name))
+        for i, c in enumerate(self.child_bones):
+            c.printChilds(indent=indent + my_indent, last_flag=(i == len(self.child_bones) - 1))
 
     def addMatrix(self, matrix, overwrite=False):
         if overwrite:
@@ -128,7 +136,7 @@ class mmdpyBone:
 
     # ik 付き
     def move(self, target, chain=None, loop_size=1, depth=1):
-        loop_range = 3
+        loop_range = 16
         if loop_size > loop_range:
             loop_size = loop_range
 
@@ -145,6 +153,7 @@ class mmdpyBone:
         target_matrix = np.identity(4)
         target_matrix[3, :3] = list(target)
         for _ in range(loop_size):  # ik step
+            d = 0
             for c in chain:
                 effector_matrix = c.updateMatrix()
                 inv_coord = np.linalg.inv(effector_matrix)
@@ -162,6 +171,9 @@ class mmdpyBone:
                 d = +1 if d > +1 else d
                 d = -1 if d < -1 else d
 
+                if abs(d) < 1e-4:
+                    break
+
                 # 移動予定角度を指定
                 rot = np.arccos(d)
 
@@ -170,6 +182,9 @@ class mmdpyBone:
 
                 # 回転制御付き回転
                 c.ik_rotatable_control(c, axis, rot)
+
+            if abs(d) < 1e-4:
+                break
 
         return self
 
