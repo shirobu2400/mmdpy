@@ -1,5 +1,7 @@
 # mmdpy
-python 純正の mmd 表示ライブラリ<br>まだ途中。
+python で書かれたの mmd 表示ライブラリ<br>まだ途中。
+pmd, vmd 対応、(pmx は今後対応予定)<br>
+物理演算、今後対応予定<br>
 
 # Reference
 ```python
