@@ -1,2 +1,41 @@
 # mmdpy
 python 純正の mmd 表示ライブラリ<br>まだ途中。
+
+# Reference
+```python
+# 表示機能作成
+model = mmdpy.model()
+
+# モデル読み込み
+model.load(<model path>)
+
+# モーション命名
+model.motion(<motion name>)
+
+# モーション読み込み
+model.motion(<motion name>).load(<motion path>)
+
+# モーションを 1[step] 実行
+model.motion(<motion name>).step()
+
+# 表示
+model.draw()
+
+# ボーン構造の表示
+model.bonetree()
+
+# ボーンの移動(IK)
+model.bone(<bone name>).move(<position 3d vector>)
+
+# ボーンの移動(強制)
+model.bone(<bone name>).slide(<position 3d vector>)
+
+# ボーンの回転
+model.bone(<bone name>).rotX(<rotation>)
+model.bone(<bone name>).rotY(<rotation>)
+model.bone(<bone name>).rotZ(<rotation>)
+model.bone(<bone name>).rot(<axis>, <rotation>)
+
+# ボーンの場所取得
+model.bone(<bone name>).get_position() -> <position 3d vector>
+```

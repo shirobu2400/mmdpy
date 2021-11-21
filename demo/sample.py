@@ -60,7 +60,6 @@ def event(value):
     glut.glutTimerFunc(1000 // FPS, event, value + 1)
     if model is not None:
         model.motion("vmd").step()
-    # model.bone("右手首").move([0, 0, 0], depth=4)
     fps_calc.show()
     glut.glutPostRedisplay()
 
