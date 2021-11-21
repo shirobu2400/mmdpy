@@ -9,10 +9,12 @@ setup(
     author_email='shirobuwq2400kskm@gmail.com',
     url='https://github.com/shirobu2400/mmdpy',
     description="mmd viewer @ python",
-    install_requires=["PyOpenGL",
-                    "PyOpenGL_accelerate",
-                    "numpy",
-                    "numpy-quaternion",
-                    "pybullet",
-                    "Pillow"]
+    install_requires=["mypy",
+                      "PyOpenGL",
+                      "PyOpenGL_accelerate",
+                      "numpy",
+                      "numba",
+                      "numpy-quaternion",
+                      "pybullet",
+                      "Pillow"]
 )

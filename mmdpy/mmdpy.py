@@ -4,52 +4,53 @@
 # #### #### #### #### #### #### #### ####
 
 import os
+from . import mmdpy_bone
 from . import pmdpy
 from . import mmdpy_model
 from . import mmdpy_motion
 from . import vmd
+from typing import Any, Dict, Union, cast
 
 
 class motion:
-    def __init__(self, model):
-        self.motion_data = vmd.mmdpyVmd()
+    def __init__(self, model: mmdpy_model.mmdpyModel):
+        self.motion_data: vmd.mmdpyVmd = vmd.mmdpyVmd()
         self.model = model
-        self.frame = 0
+        self.frame: int = 0
 
-    def load(self, filename):
-        if filename is None:
-            return False
+    def load(self, filename: str) -> bool:
         if not self.motion_data.load(filename):
+            # raise IOError
             return False
         self.motion = mmdpy_motion.mmdpyMotion(self.model, self.motion_data)
         return True
 
-    def step(self, it=1):
+    def step(self, it: int = 1) -> None:
         for _ in range(it):
             self.frame += 1
             self.update()
 
     # モーション情報をモデルボーンに反映
-    def update(self):
+    def update(self) -> None:
         self.motion.update(self.frame)
 
+
 class model:
-    def __init__(self, filename=None):
-        self.runnable = False
-        self.model = mmdpy_model.mmdpyModel()
-        self.motion_data = {}
-        if filename is not None:
+    def __init__(self, filename: str = ""):
+        self.runnable: bool = False
+        self.model: mmdpy_model.mmdpyModel = mmdpy_model.mmdpyModel()
+        self.motion_data: Dict[str, motion] = {}
+        if filename != "":
             if not self.load(filename):
                 raise FileNotFoundError
 
-    def load(self, filename):
-        self.filename = filename
+    def load(self, filename: str) -> bool:
+        self.filename: str = filename
         self.path, self.ext = os.path.splitext(filename)
 
         if self.ext == ".pmd" or self.ext == ".PMD":
-            self.data = pmdpy.mmdpyPmd()
-            if not self.data.load(self.filename):
-                return False
+            self.pmd_data = pmdpy.mmdpyPmd()
+            self.data = self.pmd_data.load(self.filename)
             self.file_type = "pmd"
         elif self.ext == ".pmx" or self.ext == ".PMX":
 
@@ -57,79 +58,51 @@ class model:
         else:
             print("Unknown file.")
             self.file_type = ""
-            return False
 
-        self.model.setModel(self.data)
-        self.updateBone()
+        if not self.data:
+            self.file_type = "None"
+            return False
+        self.model.set_model(self.data)
+        self.model.update_bone()
         for b in self.model.bones:
-            b.initUpdateMatrix()
-        self.model.createPhysics(self.data.physics_flag, self.model.bones, self.data.physics.body, self.data.physics.joint)
+            b.init_update_matrix()
+        self.model.create_physics(self.data.physics_flag, self.data)
 
         self.runnable = True
         return True
 
-    def updateBone(self):
-        if not self.runnable:
-            return self
-        for b in self.model.bones:
-            b.updateMatrix(count_flag=True)
-        for b in self.model.bones:
-            b.initUpdateMatrix()
-        return self
-
-    def ik(self, ik_flag=True):
-        if not self.runnable:
-            return self
-        if not ik_flag:
-            return self
-        for b in [x for x in self.model.bones if x.ik is not None]:
-            b.initUpdateMatrix()
-            target = b.updateMatrix()[3, :3]
-            b.ik.bone_to.move(target, chain=b.ik.child_bones, loop_size=b.ik.it)
-        return self
-
-    def physics(self, dt=33):
-        if not self.runnable:
-            return self
-        if self.model.physics is None:
-            return self
-        self.model.physics.run()
-        return self
-
     # 表示
     # 適応させるモーションがある場合 motio に入れる
-    def draw(self):
+    def draw(self) -> Any:
         if not self.runnable:
             return self
 
-        self.updateBone()
-        self.ik()
-        # self.physics()
+        self.model.update_bone()
+        self.model.update_ik()
+        # self.model.update_physics()
         self.model.draw()
         return self
 
     # モーション
-    def motion(self, name):
+    def motion(self, name: str) -> motion:
         if not self.runnable:
-            return self
-        if not name in self.motion_data:
+            raise RuntimeError
+        if name not in self.motion_data:
             self.motion_data[name] = motion(self.model)
         return self.motion_data[name]
 
     # ボーンを取得
-    def bone(self, p):
+    def bone(self, p: Union[int, str]) -> mmdpy_bone.mmdpyBone:
         if not self.runnable:
-            return self
-
+            raise RuntimeError
         if type(p) == int:
-            return self.model.getBone(p)
+            return self.model.get_bone(cast(int, p))
         if type(p) == str:
-            return self.model.getBoneByName(p)
+            return self.model.get_bone_by_name(cast(str, p))
         raise IndexError
 
-    def bonetree(self):
+    def bonetree(self) -> None:
         if not self.runnable:
-            return self
-
+            return None
         if len(self.model.bones) > 0:
-            self.model.bones[0].printChilds()
+            self.model.bones[0].print_childs()

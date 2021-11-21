@@ -1,81 +1,116 @@
+from __future__ import annotations
 import copy
+import numpy as np
+from typing import List, Union
 
 from . import mmdpy_root
 from . import mmdpy_mesh
 from . import mmdpy_shader
+from . import mmdpy_type
 from . import mmdpy_bone
-# from . import mmdpy_physics
+from . import mmdpy_physics
+
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 
 
 class mmdpyModel:
     def __init__(self):
-        self.meshes = []
+        self.shader = mmdpy_shader.mmdpyShader()
+        self.meshes: List[mmdpy_mesh.mmdpyMesh] = []
 
-        self.polygon_vertex_size = 3
-        self.vertex_range = 0xffff - 0xffff % self.polygon_vertex_size
+        # Polygon vertex size
+        self.polygon_vertex_size: int = 3
+
+        # Face size
+        self.vertex_range: int = 0xffff - 0xffff % self.polygon_vertex_size
         # self.vertex_range = 256 - 256 % self.polygon_vertex_size
 
-        self.shader = mmdpy_shader.mmdpyShader()
+        self.name2bone = {}
+        self.physics: Union[None, mmdpy_physics.mmdpyPhysics] = None
 
-    def draw(self):
+    def draw(self) -> None:
         for m in self.meshes:
             m.draw()
 
-    def createBones(self, data):
-        self.bones = []
-        self.name2bone = {}
+    def create_bones(self, data: mmdpy_type.mmdpyTypeModel) -> None:
+        self.bones: List[mmdpy_bone.mmdpyBone] = [
+            mmdpy_bone.mmdpyBone(
+                bone.id, bone.bone_type, bone.name,
+                bone.position, bone.weight, bone.rotatable_control)
+            for bone in data.bones]
+        for i, bone_i in enumerate(data.bones):
+            self.bones[i].set_parent_bone(self.bones[bone_i.parent_id])
+            self.name2bone[bone_i.name] = bone_i.id
+            self.bones[i].data = bone_i
 
-        for bi in data.bones:
-            b = mmdpy_bone.mmdpyBone(bi.id, bi.bone_type, bi.name, bi.position, bi.weight, bi.ik_rotatable_control)
-            self.bones.append(b)
-        for b, bi in zip(self.bones, data.bones):
-            b.setParentBone(self.bones[bi.parent_id])
-            self.name2bone[b.name] = b.id
-            b.data = bi
-            b.ik = bi.ik
+        self.iks: List[mmdpy_bone.mmdpyIK] = []
+        for i, ik_temp in enumerate(data.iks):
+            ik_model = mmdpy_bone.mmdpyIK(
+                self.bones[ik_temp.bone_index],
+                self.bones[ik_temp.bone_effect_index],
+                ik_temp.length, ik_temp.iteration, ik_temp.weight,
+                [self.bones[i] for i in ik_temp.child_bones_index]
+            )
+            self.bones[ik_temp.bone_index].set_ik(ik_model)
+            self.iks.append(ik_model)
 
-        # ik
-        for b in data.bones:
-            if b.ik is not None:
-                b.ik.child_bones = [self.getBoneByName(b.name) for b in b.ik.child_bones]
-                b.ik.bone_me = self.getBoneByName(b.ik.bone_me.name)
-                b.ik.bone_to = self.getBoneByName(b.ik.bone_to.name)
+    def create_physics(self, physics_flag: bool, data: mmdpy_type.mmdpyTypeModel) -> None:
+        # physics infomation
+        if physics_flag and data.physics:
+            self.physics = mmdpy_physics.mmdpyPhysics(self.bones, data.physics.body, data.physics.joint)
 
-    def createPhysics(self, physics_flag, bones, bodies, joints):
-        # physics
-        self.physics = None
-        # if physics_flag:
-        #     self.physics = mmdpy_physics.mmdpyPhysics(bones, bodies, joints)
-
-    def getBone(self, index=0):
+    def get_bone(self, index: int = 0) -> mmdpy_bone.mmdpyBone:
         return self.bones[index]
 
-    def getBoneByName(self, name):
-        if not name in self.name2bone.keys():
-            return None
+    def get_bone_by_name(self, name: str) -> mmdpy_bone.mmdpyBone:
+        if name not in self.name2bone.keys():
+            raise KeyError
         index = self.name2bone[name]
-        return self.getBone(index)
+        return self.get_bone(index)
+
+    # Bone Matrix update
+    def update_bone(self) -> mmdpyModel:
+        for b in self.bones:
+            b.update_matrix(count_flag=True)
+        for b in self.bones:
+            b.init_update_matrix()
+        return self
+
+    # IK update
+    def update_ik(self) -> mmdpyModel:
+        for ik_bone in [x for x in self.bones if x.get_ik() is not None]:
+            ik_local = ik_bone.get_ik()
+            if ik_local is not None:
+                target_vector = ik_bone.update_matrix()[3, :3]
+                ik_local.effect_bone.move(target_vector, chain=ik_local.child_bones, loop_size=ik_local.iteration)
+        return self
+
+    def update_physics(self) -> mmdpyModel:
+        if self.physics is None:
+            return self
+        self.physics.run()
+        return self
 
     # モデルを mmdpy_root.Config の設定どおりにリメイク
-    def setModel(self, data):
-        self.createBones(data)
+    def set_model(self, data: mmdpy_type.mmdpyTypeModel) -> bool:
 
-        material_id = 0
+        # Create bone and ik
+        self.create_bones(data)
+
+        material_id: int = 0
 
         # Vertex adjust
-        is_vertex_range = False     # 頂点が上限値
-        is_update_material = False  # マテリアルの更新
-        is_bone_range = False       # ボーンインデックスが上限値
+        is_vertex_range: bool = False     # 頂点が上限値
+        is_update_material: bool = False  # マテリアルの更新
+        is_bone_range: bool = False       # ボーンインデックスが上限値
 
-        new_vertex = []
-        new_face = []
-        using_bones = [0] * len(data.bones)
-        using_bones[0] = 1
-        new_bone_id = [0] + [None] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
-        rawbone_2_newbone = [0] * len(data.bones)
-        bone_counter = 1
-        oldv_2_newv = [None] * len(data.face)
+        new_vertex: List[mmdpy_type.mmdpyTypeVertex] = []
+        new_face: List[int] = []
+        using_bones: List[int] = [1] + [0] * (len(self.bones) - 1)
+        new_bone_id: List[int] = [0] + [-1] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
+        rawbone_2_newbone: List[int] = [0] * len(data.bones)
+        bone_counter: int = 1
+        oldv_2_newv: List[int] = [-1] * int(len(data.faces))
         for fi, fs in enumerate(data.faces):
             # 表現しきれない頂点インデックスのひらき
             if max(fs) - min(fs) >= self.vertex_range - self.polygon_vertex_size:
@@ -89,7 +124,9 @@ class mmdpyModel:
 
             # Mesh 追加
             if is_vertex_range or is_update_material or is_bone_range:
-                mesh = mmdpy_mesh.mmdpyMesh(len(self.meshes), self.shader, new_vertex, new_face, data.materials[material_id], [self.bones[i] for i in new_bone_id if i is not None])
+                mesh = mmdpy_mesh.mmdpyMesh(len(self.meshes), self.shader, new_vertex, new_face,
+                                            data.materials[material_id],
+                                            [self.bones[i] for i in new_bone_id if not i < 0])
                 self.meshes.append(mesh)
 
                 # 対応するマテリアルインデックスも更新
@@ -102,22 +139,21 @@ class mmdpyModel:
 
                 new_vertex = []
                 new_face = []
-                using_bones = [0] * len(data.bones)
-                using_bones[0] = 1
-                new_bone_id = [0] + [None] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
+                using_bones = [1] + [0] * (len(self.bones) - 1)
+                new_bone_id = [0] + [-1] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
                 rawbone_2_newbone = [0] * len(data.bones)
                 bone_counter = 1
-                oldv_2_newv = [None] * len(data.face)
+                oldv_2_newv = [-1] * int(len(data.faces))
 
             # 一つ一つの頂点インデックスを設定
             # 読み込んだ頂点を新頂点へ転写
             for vi in fs:
                 new_vi = len(new_vertex)
-                if oldv_2_newv[vi] is None:  # 新頂点が未設定
+                if oldv_2_newv[vi] < 0:  # 新頂点が未設定
                     v = copy.deepcopy(data.vertices[vi])
                     oldv_2_newv[vi] = len(new_vertex)
 
-                    v.bone_id = [0, 0, 0, 0]
+                    v.bone_id = np.zeros([4])
                     for i, vbone_i in enumerate(data.vertices[vi].bone_id):
                         if using_bones[vbone_i] == 0:
                             new_bone_id[bone_counter] = vbone_i
@@ -139,7 +175,9 @@ class mmdpyModel:
                 # 頂点インデックス追加
                 new_face.append(new_vi)
 
-        mesh = mmdpy_mesh.mmdpyMesh(len(self.meshes), self.shader, new_vertex, new_face, data.materials[material_id], [self.bones[i] for i in new_bone_id if i is not None])
+        mesh = mmdpy_mesh.mmdpyMesh(len(self.meshes), self.shader, new_vertex, new_face,
+                                    data.materials[material_id],
+                                    [self.bones[i] for i in new_bone_id if not i < 0])
         self.meshes.append(mesh)
 
         return True

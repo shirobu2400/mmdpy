@@ -1,0 +1,125 @@
+import numpy as np
+from . import mmdpy_texture
+from dataclasses import dataclass, field
+from typing import Any, Union, List
+
+
+# model info
+@dataclass
+class mmdpyTypeVertex():
+    ver: np.ndarray = field(init=False)
+    nor: np.ndarray = field(init=False)
+    uv: np.ndarray = field(init=False)
+    bone_id: np.ndarray = field(init=False)
+    bone_weight: np.ndarray = field(init=False)
+    edge: int = field(init=False)
+
+
+@dataclass
+class mmdpyTypeMaterial():
+    diffuse: np.ndarray = field(init=False)
+    alpha: float = field(init=False)
+    specularity: np.ndarray = field(init=False)
+    specular_color: np.ndarray = field(init=False)
+    mirror_color: np.ndarray = field(init=False)
+    toon_index: int = field(init=False)
+    edge: bool = field(init=False)
+    face_vert_count: int = field(init=False)
+    texture_name: Union[str, bytes] = field(init=False)
+
+    top: int = field(default=0)
+    size: int = field(default=0)
+    texture: Union[mmdpy_texture.mmdpyTexture, None] = field(init=False)
+
+
+@dataclass
+class mmdpyTypeIK():
+    bone_index: int = field(init=False)
+    bone_effect_index: int = field(init=False)
+    length: int = field(init=False)
+    iteration: int = field(init=False)
+    weight: np.ndarray = field(init=False)
+    child_bones_index: List[int] = field(init=False)
+
+
+@dataclass
+class mmdpyTypeBone():
+    id: int = field(init=False)
+    name: str = field(init=False)
+    bone_type: int = field(init=False)
+    position: np.ndarray = field(init=False)
+    bone: int = field(init=False)
+    bone_next: int = field(init=False)
+    weight: float = field(init=False)
+    parent_id: int = field(init=False)
+    tail_id: int = field(init=False)
+    ik_parent_id: int = field(init=False)
+    ik: Any = field(init=False)
+    rotatable_control: Any = field(init=False)
+
+
+@dataclass
+class mmdpyTypePhysicsBody():
+    name: str = field(init=False)
+    bone_id: int = field(init=False)
+    group_id: int = field(init=False)
+    group_mask: str = field(init=False)
+    type_id: int = field(init=False)
+    sizes: np.ndarray = field(init=False)
+    pos: np.ndarray = field(init=False)
+    rot: np.ndarray = field(init=False)
+    mass: float = field(init=False)
+    pos_dim: float = field(init=False)
+    rot_dim: float = field(init=False)
+    recoil: float = field(init=False)
+    friction: float = field(init=False)
+    calc: int = field(init=False)
+
+    bone: Any = field(init=False)
+    body: Any = field(init=False)
+
+
+@dataclass
+class mmdpyTypePhysicsJoint():
+    name: str = field(init=False)
+    rigidbody_a: int = field(init=False)
+    rigidbody_b: int = field(init=False)
+    pos: np.ndarray = field(init=False)
+    rot: np.ndarray = field(init=False)
+    constrain_pos: List[np.ndarray] = field(init=False)
+    spring_pos: np.ndarray = field(init=False)
+    spring_rot: np.ndarray = field(init=False)
+
+    joint: Any = field(init=False)
+
+
+@dataclass
+class mmdpyTypePhysics():
+    body: List[mmdpyTypePhysicsBody] = field(init=False)
+    joint: List[mmdpyTypePhysicsJoint] = field(init=False)
+
+
+@dataclass
+class glslInfoClass():
+    glsl_vao: Any = field(init=False)
+    face_size: int = field(init=False)
+    texture: mmdpy_texture.mmdpyTexture = field(init=False)
+    color: np.ndarray = field(default=np.zeros([4]))
+    alpha: float = field(init=False)
+    matrices: np.ndarray = field(default=np.identity(4))
+
+    indexes: np.ndarray = field(init=False)
+    weights: np.ndarray = field(init=False)
+    material: mmdpyTypeMaterial = field(init=False)
+
+
+class mmdpyTypeModel:
+    def __init__(self):
+        # Adjusted struct
+        self.vertices: List[mmdpyTypeVertex] = []
+        self.faces: List[List[int]] = []
+        self.materials: List[mmdpyTypeMaterial] = []
+        self.bones: List[mmdpyTypeBone] = []
+        self.iks: List[mmdpyTypeIK] = []
+        self.physics_flag: bool = False
+        self.physics: Union[None, mmdpyTypePhysics] = None

@@ -1,6 +1,8 @@
+mypy
 PyOpenGL
 PyOpenGL_accelerate
 numpy
+numba
 numpy-quaternion
 pybullet
 Pillow

@@ -2,6 +2,7 @@
 .mypy_cache
 .vscode
 __pycache__
+py3.9
 
 mmdpy.egg-info
 dist
@@ -9,9 +10,7 @@ build
 
 glut32.dll
 install.sh
-PyOpenGL_accelerate-3.1.5-cp36-cp36m-win_amd64.whl
-PyOpenGL-3.1.5-cp36-cp36m-win_amd64.whl
-ode-0.15.2-cp36-cp36m-win_amd64.whl
+wheel/
 
 demo/gumi
 demo/miku
@@ -24,5 +23,7 @@ demo/models
 demo/media
 
 demo.bat
+demo.sh
+wsl.xserver.txt
 
 mmdpy/backup

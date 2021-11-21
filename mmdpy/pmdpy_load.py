@@ -1,21 +1,21 @@
 import struct
 import os
-from . import mmdpy_root
+from typing import Tuple, List, Union, cast
+from . import pmdpy_type
 
 
 # #### #### PMD Loader #### ####
-def load(self, filename):
-    class empty:
-        pass
+def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
+    data = pmdpy_type.pmdpyType()
 
-    self.filename = filename
-    self.path, self.ext = os.path.splitext(filename)
-    self.directory = os.path.dirname(filename) + "/"
+    data.filename = filename
+    data.path, data.ext = os.path.splitext(filename)
+    data.directory = os.path.dirname(filename) + "/"
 
     try:
         fp = open(filename, "rb")
     except IOError:
-        return False
+        return None
 
     print("/**** **** **** **** Model File Informations **** **** **** ****/")
 
@@ -23,14 +23,14 @@ def load(self, filename):
     head = struct.unpack_from("3s", fp.read(3))
     print(head[0])
     if head[0] != b"Pmd":
-        return False
+        return None
 
     version, model_name, comment = struct.unpack_from("f20s256s", fp.read(4 + 20 + 256))
 
-    def str_to_hex(s):
+    def str_to_hex(s) -> List[str]:
         return [hex(ord(i))[2:4] for i in s]
 
-    def padding_erase(_string, ps):
+    def padding_erase(_string, ps) -> str:
         end_point = 0
         bins = str_to_hex(_string)
         length = len(_string)
@@ -39,213 +39,216 @@ def load(self, filename):
         return _string[:end_point]
 
     # Information
-    self.version = version
-    self.name = padding_erase(model_name.decode("cp932", "ignore"), 'f8')
-    self.comment = padding_erase(comment.decode("cp932", "ignore"), 'f8')
+    data.version = version
+    data.name = padding_erase(model_name.decode("cp932", "ignore"), 'f8')
+    data.comment = padding_erase(comment.decode("cp932", "ignore"), 'f8')
 
-    print(self.version)
-    print(self.name)
-    print(self.comment)
+    print(data.version)
+    print(data.name)
+    print(data.comment)
 
     # #### #### Data #### ####
 
     # #### #### Vertex #### ####
     loop_size = struct.unpack_from("i", fp.read(4))[0]
-    self.vertex = []
+    data.vertex = []
     for _ in range(loop_size):
-        e = empty()
-        e.ver = struct.unpack_from("3f", fp.read(12))
-        e.nor = struct.unpack_from("3f", fp.read(12))
-        e.uv = struct.unpack_from("2f", fp.read(8))
-        e.bone_id = list(struct.unpack_from("2h", fp.read(4)))
-        weight = ord(struct.unpack_from("c", fp.read(1))[0]) / 100.0
-        e.bone_weight = [weight, 1 - weight]
-        e.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
+        vertex = pmdpy_type.pmdpyTypeLoadVertex()
+        vertex.ver = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.nor = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.uv = cast(Tuple[float, float], struct.unpack_from("2f", fp.read(8)))
+        vertex.bone_id = cast(Tuple[int, int], struct.unpack_from("2h", fp.read(4)))
+        weight = cast(float, ord(struct.unpack_from("c", fp.read(1))[0]) / 100.0)
+        vertex.bone_weight = (weight, 1 - weight)
+        vertex.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
 
-        self.vertex.append(e)
+        data.vertex.append(vertex)
 
     # #### #### Face #### ####
-    self.face_size = loop_size = struct.unpack_from("i", fp.read(4))[0]
-    self.face = []
+    loop_size = struct.unpack_from("i", fp.read(4))[0]
+
+    data.face = []
     for _ in range(0, loop_size, 3):
-        self.face.append(struct.unpack_from("3h", fp.read(6)))
+        x = cast(Tuple[int, int, int], struct.unpack_from("3h", fp.read(6)))
+        data.face.append(x)
 
     # #### #### Material #### ####
     loop_size = struct.unpack_from("i", fp.read(4))[0]
-    self.material = []
+    data.material = []
     for _ in range(loop_size):
-        e = empty()
+        material = pmdpy_type.pmdpyTypeLoadMaterial()
 
-        e.diffuse = struct.unpack_from("3f", fp.read(12))
-        e.alpha = struct.unpack_from("f", fp.read(4))[0]
-        e.specularity = struct.unpack_from("f", fp.read(4))[0]
-        e.specular_color = struct.unpack_from("3f", fp.read(12))
-        e.mirror_color = struct.unpack_from("3f", fp.read(12))
-        e.toon_index = ord(struct.unpack_from("c", fp.read(1))[0])
-        e.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
-        e.face_vert_count = struct.unpack_from("i", fp.read(4))[0]
-        e.texture_name = struct.unpack_from("20s", fp.read(20))[0]
+        material.diffuse = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.alpha = cast(float, struct.unpack_from("f", fp.read(4))[0])
+        material.specularity = struct.unpack_from("f", fp.read(4))[0]
+        material.specular_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.mirror_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.toon_index = ord(struct.unpack_from("c", fp.read(1))[0])
+        material.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
+        material.face_vert_count = struct.unpack_from("i", fp.read(4))[0]
+        material.texture_name = bytes(struct.unpack_from("20s", fp.read(20))[0])
 
-        self.material.append(e)
+        data.material.append(material)
 
     # #### #### Bone #### ####
     loop_size = struct.unpack_from("h", fp.read(2))[0]
-    self.bone = []
+    data.bone = []
     for _ in range(loop_size):
-        e = empty()
+        bone = pmdpy_type.pmdpyTypeLoadBone()
 
-        e.name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-        e.parent_id = struct.unpack_from("h", fp.read(2))[0]
-        e.tail_id = struct.unpack_from("h", fp.read(2))[0]
-        e.bone_type = ord(struct.unpack_from("c", fp.read(1))[0])
-        e.ik_parent_id = struct.unpack_from("h", fp.read(2))[0]
-        e.position = struct.unpack_from("3f", fp.read(12))
+        bone.name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
+        bone.parent_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        bone.tail_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        bone.bone_type = ord(struct.unpack_from("c", fp.read(1))[0])
+        bone.ik_parent_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        bone.position = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-        self.bone.append(e)
+        data.bone.append(bone)
 
     # #### #### IK #### ####
     loop_size = struct.unpack_from("h", fp.read(2))[0]
-    self.ik = []
+    data.ik = []
     for _ in range(loop_size):
-        e = empty()
+        ik = pmdpy_type.pmdpyTypeLoadIK()
 
-        e.bone_id = struct.unpack_from("h", fp.read(2))[0]
-        e.bone_to = struct.unpack_from("h", fp.read(2))[0]
-        e.len = ord(struct.unpack_from("c", fp.read(1))[0])
-        e.it = struct.unpack_from("h", fp.read(2))[0]
-        e.weight = struct.unpack_from("f", fp.read(4))[0]
-        e.child_bone_id = []
-        for _ in range(e.len):
-            c = struct.unpack_from("h", fp.read(2))[0]
-            e.child_bone_id.append(c)
+        ik.bone_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        ik.bone_to = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        ik.length = ord(struct.unpack_from("c", fp.read(1))[0])
+        ik.iteration = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        ik.weight = cast(float, struct.unpack_from("f", fp.read(4))[0])
+        ik.child_bone_id = []
+        for _ in range(ik.length):
+            c = cast(int, struct.unpack_from("h", fp.read(2))[0])
+            ik.child_bone_id.append(c)
 
-        self.ik.append(e)
+        data.ik.append(ik)
 
     # #### #### Skin #### ####
     loop_size = struct.unpack_from("h", fp.read(2))[0]
-    self.skin = []
+    data.skin = []
     for _ in range(loop_size):
-        e = empty()
+        skin = pmdpy_type.pmdpyTypeLoadSkin()
 
-        e.name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-        e.var_size = struct.unpack_from("i", fp.read(4))[0]
-        e.type = ord(struct.unpack_from("c", fp.read(1))[0])
-        e.var_id = []
-        e.ver_offset = []
-        for _ in range(e.var_size):
-            t = struct.unpack_from("i", fp.read(4))[0]
-            e.var_id.append(t)
-            t = struct.unpack_from("3f", fp.read(12))
-            e.ver_offset.append(t)
+        skin.name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
+        skin.var_size = cast(int, struct.unpack_from("i", fp.read(4))[0])
+        skin.type = ord(struct.unpack_from("c", fp.read(1))[0])
+        skin.var_id = []
+        skin.ver_offset = []
+        for _ in range(skin.var_size):
+            t = cast(int, struct.unpack_from("i", fp.read(4))[0])
+            skin.var_id.append(t)
+            v = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            skin.ver_offset.append(v)
 
-        self.skin.append(e)
+        data.skin.append(skin)
 
     # #### #### Skin-Name #### ####
     loop_size = ord(struct.unpack_from("c", fp.read(1))[0])
-    self.skin_name = []
+    data.skin_name = []
     for _ in range(loop_size):
-        self.skin_name.append(struct.unpack_from("h", fp.read(2))[0])
+        skin_name_index = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        data.skin_name.append(skin_name_index)
 
     # #### #### Bone-frame-Name #### ####
     loop_size = ord(struct.unpack_from("c", fp.read(1))[0])
-    self.bone_frame_name = []
+    data.bone_frame_name = []
     for _ in range(loop_size):
-        self.bone_frame_name.append(struct.unpack_from("50c", fp.read(50))[0])
+        bone_frame_name = cast(str, struct.unpack_from("50c", fp.read(50))[0])
+        data.bone_frame_name.append(bone_frame_name)
 
     # #### #### Bone-Name #### ####
     loop_size = struct.unpack_from("h", fp.read(4))[0]
-    self.bone_number = []
+    data.bone_number = []
     for _ in range(loop_size):
-        e = empty()
+        bonename = pmdpy_type.pmdpyTypeLoadBoneName()
 
-        e.id = struct.unpack_from("h", fp.read(2))[0]
-        e.frame = ord(struct.unpack_from("c", fp.read(1))[0])
+        bonename.id = cast(int, struct.unpack_from("h", fp.read(2))[0])
+        bonename.frame = ord(struct.unpack_from("c", fp.read(1))[0])
 
-        self.bone_number.append(e)
+        data.bone_number.append(bonename)
 
     # #### #### English-header #### ####
-    self.english_flag = (ord(struct.unpack_from("c", fp.read(1))[0]) != 0)
-    if self.english_flag:
-        self.english_head = {}
+    data.english_flag = (ord(struct.unpack_from("c", fp.read(1))[0]) != 0)
+    if data.english_flag:
+        data.english_head = {}
         en_model_name, en_comment = struct.unpack_from("20s256s", fp.read(20 + 256))
-        self.english_head["name"] = padding_erase(en_model_name.decode("cp932", "ignore"), 'f8')
-        self.english_head["comment"] = padding_erase(en_comment.decode("cp932", "ignore"), 'f8')
+        data.english_head["name"] = padding_erase(en_model_name.decode("cp932", "ignore"), 'f8')
+        data.english_head["comment"] = padding_erase(en_comment.decode("cp932", "ignore"), 'f8')
 
-        print(self.english_head["name"])
-        print(self.english_head["comment"])
+        print(data.english_head["name"])
+        print(data.english_head["comment"])
 
         # bone name
-        self.bone_name_eng = []
-        for _ in range(len(self.bone)):
+        data.bone_name_eng = []
+        for _ in range(len(data.bone)):
             en_name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-            self.bone_name_eng.append(en_name)
+            data.bone_name_eng.append(en_name)
 
         # skin name
-        self.skin_name_eng = []
-        for _ in range(len(self.skin) - 1):
+        data.skin_name_eng = []
+        for _ in range(len(data.skin) - 1):
             en_name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-            self.skin_name_eng.append(en_name)
+            data.skin_name_eng.append(en_name)
 
         # bone disp name
-        self.bone_disp_name_eng = []
-        for _ in range(len(self.bone_frame_name)):
+        data.bone_disp_name_eng = []
+        for _ in range(len(data.bone_frame_name)):
             en_name = padding_erase(struct.unpack_from("50s", fp.read(50))[0].decode("cp932", "ignore"), 'f8')
-            self.bone_disp_name_eng.append(en_name)
+            data.bone_disp_name_eng.append(en_name)
 
     # #### #### Toon-name #### ####
-    self.toon_name = []
+    data.toon_name = []
     for _ in range(10):
         name = struct.unpack_from("100s", fp.read(100))[0]
-        self.toon_name.append(name)
+        data.toon_name.append(name)
 
     # #### #### Physics #### ####
     loop_size = struct.unpack_from("h", fp.read(4))[0]
-    self.physics_flag = (loop_size > 0)
-    self.physics = empty()
-    self.physics.body = []
-    self.physics.joint = []
-
-    if self.physics_flag:
+    data.physics_flag = (loop_size > 0)
+    data.physics = pmdpy_type.pmdpyLoadPhysics()
+    data.physics.body = []
+    data.physics.joint = []
+    if data.physics_flag:
         # 剛体
         for _ in range(loop_size):
             name = padding_erase(struct.unpack_from("20s", fp.read(20))[0].decode("cp932", "ignore"), 'f8')
-            bone_id = struct.unpack_from("h", fp.read(2))[0]
+            bone_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
             group_id = ord(struct.unpack_from("c", fp.read(1))[0])
             group_mask = hex(struct.unpack_from("h", fp.read(2))[0])
             type_id = ord(struct.unpack_from("c", fp.read(1))[0])
-            sizes = struct.unpack_from("3f", fp.read(12))
-            pos = struct.unpack_from("3f", fp.read(12))
-            rot = struct.unpack_from("3f", fp.read(12))
-            mass = struct.unpack_from("f", fp.read(4))[0]
-            pos_dim = struct.unpack_from("f", fp.read(4))[0]
-            rot_dim = struct.unpack_from("f", fp.read(4))[0]
-            recoil = struct.unpack_from("f", fp.read(4))[0]
-            friction = struct.unpack_from("f", fp.read(4))[0]
+            sizes = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            mass = cast(float, struct.unpack_from("f", fp.read(4))[0])
+            pos_dim = cast(float, struct.unpack_from("f", fp.read(4))[0])
+            rot_dim = cast(float, struct.unpack_from("f", fp.read(4))[0])
+            recoil = cast(float, struct.unpack_from("f", fp.read(4))[0])
+            friction = cast(float, struct.unpack_from("f", fp.read(4))[0])
             calc = ord(struct.unpack_from("c", fp.read(1))[0])
 
-            e = empty()
+            body = pmdpy_type.pmdpyTypeLoadPhysicsBody()
 
-            e.name = name
-            e.bone_id = bone_id
-            e.group_id = group_id
-            e.group_mask = group_mask
-            e.type_id = type_id
+            body.name = name
+            body.bone_id = bone_id
+            body.group_id = group_id
+            body.group_mask = group_mask
+            body.type_id = type_id
 
-            e.sizes = empty()
-            e.sizes.x = sizes[0]
-            e.sizes.y = sizes[1]
-            e.sizes.z = sizes[2]
+            body.sizes = pmdpy_type.pmdpyTypeLoadPhysicsBodyVector()
+            body.sizes.x = sizes[0]
+            body.sizes.y = sizes[1]
+            body.sizes.z = sizes[2]
 
-            e.pos = pos
-            e.rot = rot
-            e.mass = mass
-            e.pos_dim = pos_dim
-            e.rot_dim = rot_dim
-            e.recoil = recoil
-            e.friction = friction
-            e.calc = calc  # 0:固定剛体, 1:物理演算, 2:追従
+            body.pos = pos
+            body.rot = rot
+            body.mass = mass
+            body.pos_dim = pos_dim
+            body.rot_dim = rot_dim
+            body.recoil = recoil
+            body.friction = friction
+            body.calc = calc  # 0:固定剛体, 1:物理演算, 2:追従
 
-            self.physics.body.append(e)
+            data.physics.body.append(body)
 
         # ジョイント
         loop_size = struct.unpack_from("h", fp.read(4))[0]
@@ -254,28 +257,28 @@ def load(self, filename):
             rigidbody_a = struct.unpack_from("i", fp.read(4))[0]
             rigidbody_b = struct.unpack_from("i", fp.read(4))[0]
 
-            pos = struct.unpack_from("3f", fp.read(12))
-            rot = struct.unpack_from("3f", fp.read(12))
+            pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-            constrain_pos_1 = struct.unpack_from("3f", fp.read(12))
-            constrain_pos_2 = struct.unpack_from("3f", fp.read(12))
-            constrain_pos_3 = struct.unpack_from("3f", fp.read(12))
-            constrain_pos_4 = struct.unpack_from("3f", fp.read(12))
+            constrain_pos_1 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_2 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_3 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_4 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-            spring_pos = struct.unpack_from("3f", fp.read(12))
-            spring_rot = struct.unpack_from("3f", fp.read(12))
+            spring_pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            spring_rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-            e = empty()
+            joint = pmdpy_type.pmdpyTypeLoadPhysicsJoint()
 
-            e.name = name
-            e.rigidbody_a = rigidbody_a
-            e.rigidbody_b = rigidbody_b
-            e.pos = pos
-            e.rot = rot
-            e.constrain_pos = [constrain_pos_1, constrain_pos_2, constrain_pos_3, constrain_pos_4]
-            e.spring_pos = spring_pos
-            e.spring_rot = spring_rot
+            joint.name = name
+            joint.rigidbody_a = rigidbody_a
+            joint.rigidbody_b = rigidbody_b
+            joint.pos = pos
+            joint.rot = rot
+            joint.constrain_pos = [constrain_pos_1, constrain_pos_2, constrain_pos_3, constrain_pos_4]
+            joint.spring_pos = spring_pos
+            joint.spring_rot = spring_rot
 
-            self.physics.joint.append(e)
+            data.physics.joint.append(joint)
 
-    return True
+    return data

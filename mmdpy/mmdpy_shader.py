@@ -1,12 +1,12 @@
 from . import mmdpy_root
 import OpenGL
-OpenGL.ERROR_ON_COPY = True
-from OpenGL.GL import *
-from OpenGL.GLU import *
-from OpenGL.GLUT import *
-from OpenGL.GL.shaders import *
+import OpenGL.GL as gl
 import numpy as np
+from typing import Any, Union, List, cast
+from . import mmdpy_type
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
+OpenGL.ERROR_ON_COPY = True
+
 
 class mmdpyShader:
     def __init__(self):
@@ -14,100 +14,106 @@ class mmdpyShader:
         if not self.compile():
             raise IOError
 
-    def draw(self, glsl_info):
-        self.shaderOn()
-        glUniform1f(self.glsl_id_is_texture, 0.0)
+    def draw(self, glsl_info: mmdpy_type.glslInfoClass) -> None:
+        self.shader_on()
+        gl.glUniform1f(self.glsl_id_is_texture, 0.00)
         if glsl_info.texture is not None:
-            glUniform1f(self.glsl_id_is_texture, 1.0)
+            gl.glUniform1f(self.glsl_id_is_texture, 1.00)
             glsl_info.texture.draw()
-        glUniform4f(self.glsl_id_color, glsl_info.color[0], glsl_info.color[1], glsl_info.color[2], glsl_info.color[3])
-        glUniform1f(self.glsl_id_alpha, glsl_info.alpha)
-        glUniformMatrix4fv(self.glsl_id_bone_matrix, int(glsl_info.matrices.shape[0]), GL_FALSE, glsl_info.matrices)
-        glBindVertexArray(glsl_info.glsl_vao)
-        glDrawElements(GL_TRIANGLES, glsl_info.face_size, GL_UNSIGNED_SHORT, None)
-        glBindVertexArray(0)
-        self.shaderOff()
+        gl.glUniform4f(self.glsl_id_color,
+                       glsl_info.color[0], glsl_info.color[1], glsl_info.color[2], glsl_info.color[3])
+        gl.glUniform1f(self.glsl_id_alpha, glsl_info.alpha)
+        gl.glUniformMatrix4fv(self.glsl_id_bone_matrix, int(glsl_info.matrices.shape[0]),
+                              gl.GL_FALSE, cast(object, glsl_info.matrices))
+        gl.glBindVertexArray(glsl_info.glsl_vao)
+        gl.glDrawElements(gl.GL_TRIANGLES, glsl_info.face_size, gl.GL_UNSIGNED_SHORT, None)
+        gl.glBindVertexArray(0)
+        self.shader_off()
 
-    def setBuffers(self, vertex, uv, face):
-        class empty:
-            pass
-
-        glsl_info = empty
+    def set_buffers(self, vertex: np.ndarray, uv: np.ndarray, face: np.ndarray) -> mmdpy_type.glslInfoClass:
+        glsl_info = mmdpy_type.glslInfoClass()
         face_size = len(face)
         face = np.array(face, dtype=(np.uint16))
-        glsl_vbo_vertex = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_vertex)
-        glBufferData(GL_ARRAY_BUFFER, vertex.nbytes, vertex, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glsl_vbo_uv = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_uv)
-        glBufferData(GL_ARRAY_BUFFER, uv.nbytes, uv, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glsl_vao = glGenVertexArrays(1)
-        glBindVertexArray(glsl_vao)
-        glEnableVertexAttribArray(self.glsl_id_vertex)
-        glEnableVertexAttribArray(self.glsl_id_uv)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_vertex)
-        glVertexAttribPointer(self.glsl_id_vertex, 3, GL_FLOAT, GL_FALSE, 0, None)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_uv)
-        glVertexAttribPointer(self.glsl_id_uv, 2, GL_FLOAT, GL_FALSE, 0, None)
-        glsl_vbo_face = glGenBuffers(1)
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glsl_vbo_face)
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, face.nbytes, face, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(0)
+        glsl_vbo_vertex = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_vertex)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertex.nbytes, vertex, gl.GL_STATIC_DRAW)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        glsl_vbo_uv = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_uv)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, uv.nbytes, uv, gl.GL_STATIC_DRAW)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        glsl_vao = gl.glGenVertexArrays(1)
+        gl.glBindVertexArray(glsl_vao)
+        gl.glEnableVertexAttribArray(self.glsl_id_vertex)
+        gl.glEnableVertexAttribArray(self.glsl_id_uv)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_vertex)
+        gl.glVertexAttribPointer(self.glsl_id_vertex, 3, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_uv)
+        gl.glVertexAttribPointer(self.glsl_id_uv, 2, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        glsl_vbo_face = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ELEMENT_ARRAY_BUFFER, glsl_vbo_face)
+        gl.glBufferData(gl.GL_ELEMENT_ARRAY_BUFFER, face.nbytes, face, gl.GL_STATIC_DRAW)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
         glsl_info.glsl_vao = glsl_vao
         glsl_info.face_size = face_size
         return glsl_info
 
-    def setBone(self, glsl_info, indexes, weights):
-        glsl_vbo_bone_indexes = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_bone_indexes)
-        glBufferData(GL_ARRAY_BUFFER, indexes.nbytes, indexes, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glsl_vbo_bone_weigths = glGenBuffers(1)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_bone_weigths)
-        glBufferData(GL_ARRAY_BUFFER, weights.nbytes, weights, GL_STATIC_DRAW)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(glsl_info.glsl_vao)
-        glEnableVertexAttribArray(self.glsl_id_bone_indexes)
-        glEnableVertexAttribArray(self.glsl_id_bone_weights)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_bone_indexes)
-        glVertexAttribPointer(self.glsl_id_bone_indexes, 4, GL_FLOAT, GL_FALSE, 0, None)
-        glBindBuffer(GL_ARRAY_BUFFER, glsl_vbo_bone_weigths)
-        glVertexAttribPointer(self.glsl_id_bone_weights, 4, GL_FLOAT, GL_FALSE, 0, None)
-        glBindBuffer(GL_ARRAY_BUFFER, 0)
-        glBindVertexArray(0)
-        glsl_info.index = indexes
-        glsl_info.weight = weights
+    def set_bone(self, glsl_info: mmdpy_type.glslInfoClass, indexes: np.ndarray, weights: np.ndarray) -> None:
+        glsl_vbo_bone_indexes = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_bone_indexes)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, indexes.nbytes, indexes, gl.GL_STATIC_DRAW)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        glsl_vbo_bone_weigths = gl.glGenBuffers(1)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_bone_weigths)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, weights.nbytes, weights, gl.GL_STATIC_DRAW)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(glsl_info.glsl_vao)
+        gl.glEnableVertexAttribArray(self.glsl_id_bone_indexes)
+        gl.glEnableVertexAttribArray(self.glsl_id_bone_weights)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_bone_indexes)
+        gl.glVertexAttribPointer(self.glsl_id_bone_indexes, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, glsl_vbo_bone_weigths)
+        gl.glVertexAttribPointer(self.glsl_id_bone_weights, 4, gl.GL_FLOAT, gl.GL_FALSE, 0, None)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
+        gl.glBindVertexArray(0)
+        glsl_info.indexes = indexes
+        glsl_info.weights = weights
 
-    def setTexture(self, glsl_info, texture):
+    def set_texture(self, glsl_info: mmdpy_type.glslInfoClass, texture: Any) -> None:
         glsl_info.texture = texture
 
-    def setMaterial(self, glsl_info, material):
+    def set_material(self, glsl_info: mmdpy_type.glslInfoClass, material: mmdpy_type.mmdpyTypeMaterial) -> None:
         glsl_info.material = material
         glsl_info.alpha = material.alpha
         color = np.array((list(material.diffuse) + [1.0]), dtype=(np.float32))
         glsl_info.color = color
         glsl_info.alpha = glsl_info.alpha
 
-    def setBoneMatrix(self, glsl_info, matrix):
+    def set_boneMatrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: List[np.ndarray]) -> None:
         matrices = []
         for _ in range(MMDPY_MATERIAL_USING_BONE_NUM):
             matrices.append(matrix)
 
         glsl_info.matrices = np.array(matrices, dtype=(np.float32))
 
-    def setProjectionMatrix(self, matrix=None, left=-0.5, right=0.5, top=-0.5, bottom=0.5, near=1.0, far=160.0):
+    def set_projection_matrix(self,
+                              matrix: Union[None, np.ndarray] = None,
+                              left: float = -0.5, right: float = 0.5,
+                              top: float = -0.5, bottom: float = 0.5,
+                              near: float = 1.0, far: float = 160.0):
         if matrix is None:
-            matrix = self.perspectiveMatrix(left, right, top, bottom, near, far)
-        glUniformMatrix4fv(self.glsl_id_projection_matrix, matrix)
+            matrix = self.perspective_matrix(left, right, top, bottom, near, far)
+            # gl.glUniformMatrix4fv(self.glsl_id_projection_matrix, matrix)
 
-    def perspectiveMatrix(self, left, right, top, bottom, near, far):
+    def perspective_matrix(self,
+                           left: float, right: float,
+                           top: float, bottom: float,
+                           near: float, far: float) -> np.ndarray:
         dx = right - left
         dy = bottom - top
         dz = far - near
-        matrix = np.array([16])
+        matrix = np.array([16], dtype=np.float32)
         matrix[0] = 2.0 * near / dx
         matrix[5] = 2.0 * near / dy
         matrix[8] = (right + left) / dx
@@ -115,20 +121,20 @@ class mmdpyShader:
         matrix[10] = -(far + near) / dz
         matrix[11] = -1.0
         matrix[14] = -2.0 * far * near / dz
-        matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[6] = matrix[7] = matrix[12] = matrix[13] = matrix[15] = 0.0
+        matrix[1] = matrix[2] = matrix[3] = matrix[4] = matrix[6] = matrix[7] = matrix[12] = matrix[13] = matrix[15] = 0
         return matrix
 
-    def shaderOn(self):
+    def shader_on(self) -> bool:
         if self.program is not None:
-            glUseProgram(self.program)
+            gl.glUseProgram(self.program)
         else:
             return False
         return True
 
-    def shaderOff(self):
-        glUseProgram(0)
+    def shader_off(self) -> None:
+        gl.glUseProgram(0)
 
-    def compile(self):
+    def compile(self) -> bool:
         vertex_shader_src = """
             #version 110
             // uniform     mat4    ProjectionMatrix;
@@ -173,55 +179,54 @@ class mmdpyShader:
                 gl_FragColor = color;
             }
         """
-        self.program = glCreateProgram()
-        if not self.createShader(GL_VERTEX_SHADER, vertex_shader_src):
+        self.program = gl.glCreateProgram()
+        if not self.create_shader(gl.GL_VERTEX_SHADER, vertex_shader_src):
             print('GL_VERTEX_SHADER ERROR')
             return False
-        if not self.createShader(GL_FRAGMENT_SHADER, fragment_shader_src):
+        if not self.create_shader(gl.GL_FRAGMENT_SHADER, fragment_shader_src):
             print('GL_FRAGMENT_SHADER ERROR')
             return False
         else:
             if not self.link():
                 print('SHADER LINK ERROR')
                 return False
-            self.createVariable()
+            self.create_variable()
             return True
 
-    def createShader(self, shader_type, src):
-        shader = glCreateShader(shader_type)
-        glShaderSource(shader, src)
-        glCompileShader(shader)
-        r = glGetShaderiv(shader, GL_COMPILE_STATUS)
+    def create_shader(self, shader_type: Any, src: str) -> bool:
+        shader = gl.glCreateShader(shader_type)
+        gl.glShaderSource(shader, src)
+        gl.glCompileShader(shader)
+        r = gl.glGetShaderiv(shader, gl.GL_COMPILE_STATUS)
         if r == 0:
             return False
-        else:
-            glAttachShader(self.program, shader)
-            glDeleteShader(shader)
-            return True
+        gl.glAttachShader(self.program, shader)
+        gl.glDeleteShader(shader)
+        return True
 
-    def link(self):
+    def link(self) -> bool:
         if self.program is not None:
-            glLinkProgram(self.program)
-        r = glGetProgramiv(self.program, GL_LINK_STATUS)
+            gl.glLinkProgram(self.program)
+        r = gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
         if r == 0:
-            glDeleteProgram(self.program)
+            gl.glDeleteProgram(self.program)
             return False
         else:
-            glGetProgramiv(self.program, GL_LINK_STATUS)
-            glGetProgramiv(self.program, GL_LINK_STATUS)
+            gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
+            gl.glGetProgramiv(self.program, gl.GL_LINK_STATUS)
             return True
 
-    def createVariable(self):
-        self.shaderOn()
-        self.glsl_id_vertex = glGetAttribLocation(self.program, 'Vertex')
-        self.glsl_id_uv = glGetAttribLocation(self.program, 'InputUV')
-        self.glsl_id_color = glGetUniformLocation(self.program, 'InputColor')
-        self.glsl_id_texture01 = glGetUniformLocation(self.program, 'Texture01')
-        self.glsl_id_alpha = glGetUniformLocation(self.program, 'Alpha')
-        self.glsl_id_is_texture = glGetUniformLocation(self.program, 'IsTexture')
-        self.glsl_id_bone_indexes = glGetAttribLocation(self.program, 'BoneIndices')
-        self.glsl_id_bone_weights = glGetAttribLocation(self.program, 'BoneWeights')
-        self.glsl_id_bone_matrix = glGetUniformLocation(self.program, 'BoneMatrix')
-        glActiveTexture(GL_TEXTURE0)
-        glUniform1i(self.glsl_id_texture01, 0)
-        self.shaderOff()
+    def create_variable(self) -> None:
+        self.shader_on()
+        self.glsl_id_vertex: int = gl.glGetAttribLocation(self.program, 'Vertex')
+        self.glsl_id_uv: int = gl.glGetAttribLocation(self.program, 'InputUV')
+        self.glsl_id_color: int = gl.glGetUniformLocation(self.program, 'InputColor')
+        self.glsl_id_texture01: int = gl.glGetUniformLocation(self.program, 'Texture01')
+        self.glsl_id_alpha: int = gl.glGetUniformLocation(self.program, 'Alpha')
+        self.glsl_id_is_texture: int = gl.glGetUniformLocation(self.program, 'IsTexture')
+        self.glsl_id_bone_indexes: int = gl.glGetAttribLocation(self.program, 'BoneIndices')
+        self.glsl_id_bone_weights: int = gl.glGetAttribLocation(self.program, 'BoneWeights')
+        self.glsl_id_bone_matrix: int = gl.glGetUniformLocation(self.program, 'BoneMatrix')
+        gl.glActiveTexture(gl.GL_TEXTURE0)
+        gl.glUniform1i(self.glsl_id_texture01, 0)
+        self.shader_off()
