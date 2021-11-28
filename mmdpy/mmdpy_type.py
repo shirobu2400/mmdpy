@@ -23,13 +23,15 @@ class mmdpyTypeMaterial():
     specular_color: np.ndarray = field(init=False)
     mirror_color: np.ndarray = field(init=False)
     toon_index: int = field(init=False)
-    edge: bool = field(init=False)
+    edge_size: float = field(init=False)
     face_vert_count: int = field(init=False)
     texture_name: Union[str, bytes] = field(init=False)
 
     top: int = field(default=0)
     size: int = field(default=0)
     texture: Union[mmdpy_texture.mmdpyTexture, None] = field(init=False)
+    color: np.ndarray = field(init=False)
+    both_side_flag: bool = False
 
 
 @dataclass
@@ -54,7 +56,7 @@ class mmdpyTypeBone():
     parent_id: int = field(init=False)
     tail_id: int = field(init=False)
     ik_parent_id: int = field(init=False)
-    ik: Any = field(init=False)
+    ik: Union[None, mmdpyTypeIK] = field(default=None)
     rotatable_control: Any = field(init=False)
 
 
@@ -120,6 +122,5 @@ class mmdpyTypeModel:
         self.faces: List[List[int]] = []
         self.materials: List[mmdpyTypeMaterial] = []
         self.bones: List[mmdpyTypeBone] = []
-        self.iks: List[mmdpyTypeIK] = []
         self.physics_flag: bool = False
         self.physics: Union[None, mmdpyTypePhysics] = None

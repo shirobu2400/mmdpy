@@ -23,8 +23,9 @@ class mmdpyTexture:
         except ValueError:
             return None
         else:
-            image = image.convert('RGBA')
-            image_data = np.array(list(image.getdata()), np.int8)
+            if image.mode != "RGBA":
+                image = image.convert('RGBA')
+            image_data = np.array(list(image.getdata()), np.uint8)
             self.glsl_texture = gl.glGenTextures(1)
             gl.glEnable(gl.GL_TEXTURE_2D)
             gl.glBindTexture(gl.GL_TEXTURE_2D, self.glsl_texture)

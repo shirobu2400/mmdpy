@@ -9,20 +9,19 @@ def normalize(v):
 
 
 class mmdpyIK:
-    def __init__(self, bone: Any, next_bone: Any, length: int, iteration: int, weight: np.ndarray, child_bones: List):
+    def __init__(self, bone: Any, next_bone: Any, iteration: int, child_bones: List):
         self.bone: Any = bone
         self.effect_bone: Any = next_bone
-        self.length: int = length
         self.iteration: int = iteration
-        self.weight: np.ndarray = weight
         self.child_bones: List[Any] = child_bones
 
 
 class mmdpyBone:
-    def __init__(self, index: int, bone_type: int, name: str,
-                 position: np.ndarray, weight: float, rotatable_control: Any):
+    def __init__(self,
+                 index: int, name: str,
+                 position: np.ndarray, weight: float,
+                 rotatable_control: Any):
         self.id: int = index
-        self.type: int = bone_type
         self.name: str = name
         self.weight: float = weight
 

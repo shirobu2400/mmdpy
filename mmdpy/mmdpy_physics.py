@@ -15,8 +15,8 @@ class mmdpyPhysics:
         self.joint = joint
 
         # 世界生成
-        # self.physics_client = pbt.connect(pbt.DIRECT)
-        self.physics_client = pbt.connect(pbt.GUI)
+        self.physics_client = pbt.connect(pbt.DIRECT)
+        # self.physics_client = pbt.connect(pbt.GUI)
         pbt.setGravity(0, 0, -9.81)
 
         # リアルタイム

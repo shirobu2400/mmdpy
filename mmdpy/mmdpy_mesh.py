@@ -13,6 +13,7 @@ class mmdpyMesh:
                  material: mmdpy_type.mmdpyTypeMaterial, bone: List[mmdpy_bone.mmdpyBone]):
         self.index: int = index
         self.shader: mmdpy_shader.mmdpyShader = shader
+        self.both_side_flag = material.both_side_flag
         ver: List[np.ndarray] = []
         uv: List[np.ndarray] = []
         bone_id: List[np.ndarray] = []
@@ -38,9 +39,12 @@ class mmdpyMesh:
     def draw(self) -> None:
         self.shader.set_boneMatrix(self.glsl_info, [x.local_matrix for x in self.bone])
         gl.glEnable(gl.GL_DEPTH_TEST)
-        gl.glEnable(gl.GL_CULL_FACE)
-        gl.glFrontFace(gl.GL_CCW)
-        gl.glCullFace(gl.GL_BACK)
+        if self.both_side_flag:
+            gl.glDisable(gl.GL_CULL_FACE)
+        else:
+            gl.glEnable(gl.GL_CULL_FACE)
+            gl.glFrontFace(gl.GL_CCW)
+            gl.glCullFace(gl.GL_BACK)
         gl.glEnable(gl.GL_TEXTURE_2D)
         gl.glActiveTexture(gl.GL_TEXTURE0)
         self.shader.draw(self.glsl_info)

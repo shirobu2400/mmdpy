@@ -1,6 +1,6 @@
 # mmdpy
 python で書かれたの mmd 表示ライブラリ<br>まだ途中。
-pmd, vmd 対応、(pmx は今後対応予定)<br>
+pmx, pmd, vmd 対応(一部、確認していないモデルがあります)<br>
 物理演算、今後対応予定<br>
 
 # Reference
@@ -40,4 +40,10 @@ model.bone(<bone name>).rot(<axis>, <rotation>)
 
 # ボーンの場所取得
 model.bone(<bone name>).get_position() -> <position 3d vector>
+```
+
+# demo code
+```bash
+$ python demo/sample_glfw.py -p <pmd, pmx model path> -v <vmd motion path>      # GLFW を用いた実装
+$ python demo/sample_legacy.py -p <pmd, pmx model path> -v <vmd motion path>    # 古典的なOprnGLの実装
 ```

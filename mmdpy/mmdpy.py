@@ -6,6 +6,7 @@
 import os
 from . import mmdpy_bone
 from . import pmdpy
+from . import pmxpy
 from . import mmdpy_model
 from . import mmdpy_motion
 from . import vmd
@@ -53,7 +54,8 @@ class model:
             self.data = self.pmd_data.load(self.filename)
             self.file_type = "pmd"
         elif self.ext == ".pmx" or self.ext == ".PMX":
-
+            self.pmx_data = pmxpy.mmdpyPmx()
+            self.data = self.pmx_data.load(self.filename)
             self.file_type = "pmx"
         else:
             print("Unknown file.")

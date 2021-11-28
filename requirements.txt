@@ -6,3 +6,4 @@ numba
 numpy-quaternion
 pybullet
 Pillow
+glfw

@@ -83,11 +83,11 @@ class mmdpyShader:
     def set_texture(self, glsl_info: mmdpy_type.glslInfoClass, texture: Any) -> None:
         glsl_info.texture = texture
 
-    def set_material(self, glsl_info: mmdpy_type.glslInfoClass, material: mmdpy_type.mmdpyTypeMaterial) -> None:
+    def set_material(self, glsl_info: mmdpy_type.glslInfoClass,
+                     material: mmdpy_type.mmdpyTypeMaterial) -> None:
         glsl_info.material = material
         glsl_info.alpha = material.alpha
-        color = np.array((list(material.diffuse) + [1.0]), dtype=(np.float32))
-        glsl_info.color = color
+        glsl_info.color = material.color
         glsl_info.alpha = glsl_info.alpha
 
     def set_boneMatrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: List[np.ndarray]) -> None:
@@ -173,10 +173,11 @@ class mmdpyShader:
 
             void main( void )
             {
-                vec4    color = texture2D( Texture01, ShareUV );
-                color += (1.00 - IsTexture) * ShareColor;
-                color.a = Alpha;
-                gl_FragColor = color;
+                vec4    tex_color = texture2D( Texture01, ShareUV );
+                // tex_color += ( 1.00 - IsTexture ) * ShareColor;
+                tex_color.a = tex_color.a * Alpha;
+                //gl_FragColor = tex_color * ( 1.00 - ShareColor.a ) + ShareColor * ShareColor.a;
+                gl_FragColor = tex_color * ( 1.00 - ShareColor.a ) + ShareColor * ShareColor.a;
             }
         """
         self.program = gl.glCreateProgram()
