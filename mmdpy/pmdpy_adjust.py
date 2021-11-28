@@ -38,7 +38,7 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
         m.specular_color = np.asarray(mm.specular_color)
         m.mirror_color = np.asarray(mm.mirror_color)
         m.toon_index = mm.toon_index
-        m.edge = mm.edge
+        m.edge_size = float(mm.edge)
         m.face_vert_count = mm.face_vert_count
 
         m.top = m_top
@@ -53,6 +53,10 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
                 m.texture_name = m.texture_name[:str(m.texture_name).find("*")]
             texture_path = os.path.join(pmd_data.directory, cast(str, m.texture_name))
             m.texture = mmdpy_texture.mmdpyTexture(texture_path)
+        m.both_side_flag = (mm.alpha < 1 - 1e-8)
+        m.color = np.concatenate(m.diffuse, [m.alpha])
+        if m.texture is not None:
+            m.color[3] = 0
 
         adjust_data.materials.append(m)
 
@@ -68,6 +72,7 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
         b.name = bb.name.replace("\x00", "")
         b.weight = 1.00
         b.rotatable_control = lambda b, axis, rot: b.rot(axis, rot * b.weight)
+        b.ik = None
         adjust_data.bones.append(b)
 
     # #### #### IK #### ####
@@ -84,7 +89,7 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
             adjust_data.bones[c].weight = pmd_ik.weight
             adjust_data.bones[c].rotatable_control = lambda b, axis, rot: b.rot(axis, rot * b.weight)
 
-        adjust_data.iks.append(mmd_ik)
+        adjust_data.bones[mmd_ik.bone_index].ik = mmd_ik
 
     # ひざの処理
     def knee_control(b: Any, axis: np.ndarray, rot: np.ndarray) -> None:

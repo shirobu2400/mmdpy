@@ -16,5 +16,6 @@ setup(
                       "numba",
                       "numpy-quaternion",
                       "pybullet",
-                      "Pillow"]
+                      "Pillow",
+                      "glfw"]
 )

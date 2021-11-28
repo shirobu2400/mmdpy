@@ -2,7 +2,7 @@ from __future__ import annotations
 import copy
 import numpy as np
 from typing import List, Union
-
+import OpenGL.GL as gl
 from . import mmdpy_root
 from . import mmdpy_mesh
 from . import mmdpy_shader
@@ -29,30 +29,42 @@ class mmdpyModel:
         self.physics: Union[None, mmdpy_physics.mmdpyPhysics] = None
 
     def draw(self) -> None:
+        self.draw_option_on()
         for m in self.meshes:
             m.draw()
+        self.draw_option_off()
+
+    def draw_option_on(self) -> None:
+        gl.glEnable(gl.GL_TEXTURE_2D)
+        gl.glDepthFunc(gl.GL_LEQUAL)
+        gl.glEnable(gl.GL_DEPTH_TEST)
+        gl.glEnable(gl.GL_BLEND)
+        gl.glBlendFunc(gl.GL_SRC_ALPHA, gl.GL_ONE_MINUS_SRC_ALPHA)
+
+    def draw_option_off(self) -> None:
+        gl.glDisable(gl.GL_TEXTURE_2D)
+        gl.glDisable(gl.GL_DEPTH_TEST)
+        gl.glDisable(gl.GL_BLEND)
 
     def create_bones(self, data: mmdpy_type.mmdpyTypeModel) -> None:
         self.bones: List[mmdpy_bone.mmdpyBone] = [
             mmdpy_bone.mmdpyBone(
-                bone.id, bone.bone_type, bone.name,
-                bone.position, bone.weight, bone.rotatable_control)
+                bone.id, bone.name,
+                bone.position, bone.weight,
+                bone.rotatable_control)
             for bone in data.bones]
         for i, bone_i in enumerate(data.bones):
             self.bones[i].set_parent_bone(self.bones[bone_i.parent_id])
             self.name2bone[bone_i.name] = bone_i.id
             self.bones[i].data = bone_i
-
-        self.iks: List[mmdpy_bone.mmdpyIK] = []
-        for i, ik_temp in enumerate(data.iks):
-            ik_model = mmdpy_bone.mmdpyIK(
-                self.bones[ik_temp.bone_index],
-                self.bones[ik_temp.bone_effect_index],
-                ik_temp.length, ik_temp.iteration, ik_temp.weight,
-                [self.bones[i] for i in ik_temp.child_bones_index]
-            )
-            self.bones[ik_temp.bone_index].set_ik(ik_model)
-            self.iks.append(ik_model)
+            if bone_i.ik:
+                ik_model = mmdpy_bone.mmdpyIK(
+                    self.bones[i],
+                    self.bones[bone_i.ik.bone_effect_index],
+                    bone_i.ik.iteration,
+                    [self.bones[i] for i in bone_i.ik.child_bones_index]
+                )
+                self.bones[i].set_ik(ik_model)
 
     def create_physics(self, physics_flag: bool, data: mmdpy_type.mmdpyTypeModel) -> None:
         # physics infomation
@@ -98,6 +110,7 @@ class mmdpyModel:
         self.create_bones(data)
 
         material_id: int = 0
+        face_length: int = len(data.faces)
 
         # Vertex adjust
         is_vertex_range: bool = False     # 頂点が上限値
@@ -110,8 +123,12 @@ class mmdpyModel:
         new_bone_id: List[int] = [0] + [-1] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
         rawbone_2_newbone: List[int] = [0] * len(data.bones)
         bone_counter: int = 1
-        oldv_2_newv: List[int] = [-1] * int(len(data.faces))
-        for fi, fs in enumerate(data.faces):
+        oldv_2_newv: List[int] = [-1] * int(face_length)
+
+        fi = 0
+        while fi < face_length:
+            fs = data.faces[fi]
+
             # 表現しきれない頂点インデックスのひらき
             if max(fs) - min(fs) >= self.vertex_range - self.polygon_vertex_size:
                 is_vertex_range = True
@@ -161,6 +178,7 @@ class mmdpyModel:
                             bone_counter += 1
                             if bone_counter >= MMDPY_MATERIAL_USING_BONE_NUM - 1:
                                 is_bone_range = True
+                                break
 
                         v.bone_id[i] = rawbone_2_newbone[vbone_i]
                         using_bones[vbone_i] += 1
@@ -172,8 +190,16 @@ class mmdpyModel:
                     # 新頂点設定済み
                     new_vi = oldv_2_newv[vi]
 
+                if is_bone_range:
+                    # 対象の面をやり直し
+                    fi -= 1
+                    break
+
                 # 頂点インデックス追加
                 new_face.append(new_vi)
+
+            # 面をインクリメント
+            fi += 1
 
         mesh = mmdpy_mesh.mmdpyMesh(len(self.meshes), self.shader, new_vertex, new_face,
                                     data.materials[material_id],

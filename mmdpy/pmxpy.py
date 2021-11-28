@@ -1,18 +1,18 @@
 from typing import Union
-from . import pmdpy_load
-from . import pmdpy_adjust
+from . import pmxpy_load
+from . import pmxpy_adjust
 from . import mmdpy_type
 
 
-class mmdpyPmd:
+class mmdpyPmx:
     def __init__(self, filename: str = ""):
         self.pmd_flag = False
         if filename != "":
             self.load(filename)
 
     def load(self, filename: str) -> Union[None, mmdpy_type.mmdpyTypeModel]:
-        data = pmdpy_load.load(filename)
+        data = pmxpy_load.load(filename)
         if not data:
             return None
-        mmd_data = pmdpy_adjust.adjust(data)
+        mmd_data = pmxpy_adjust.adjust(data)
         return mmd_data
