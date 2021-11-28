@@ -12,9 +12,10 @@ setup(
     install_requires=["mypy",
                       "PyOpenGL",
                       "PyOpenGL_accelerate",
-                      "numpy",
                       "numba",
+                      "numpy",
                       "numpy-quaternion",
+                      "quaternion",
                       "pybullet",
                       "Pillow",
                       "glfw"]
