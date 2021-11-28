@@ -75,6 +75,9 @@ def main():
         # set camera
         glu.gluLookAt(0.0, 10.0, -30.0, 0.0, 10.0, 0.0, 0.0, 1.0, 0.0)
 
+        # step motion
+        model.motion("vmd").step()
+
         # Render here, e.g. using pyOpenGL
         model.draw()
 
@@ -88,7 +91,7 @@ def main():
         glfw.poll_events()
 
         # wait
-        glfw.wait_events_timeout(int(1000. / 60))
+        glfw.wait_events_timeout(1. / 60)
 
     # Destory window
     glfw.destroy_window(window)
