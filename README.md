@@ -43,6 +43,9 @@ model.bone(<bone name>).get_position() -> <position 3d vector>
 
 # demo code
 ```bash
-$ python demo/sample_glfw.py -p <pmd, pmx model path> -v <vmd motion path>      # GLFW を用いた実装
-$ python demo/sample_legacy.py -p <pmd, pmx model path> -v <vmd motion path>    # 古典的なOprnGLの実装
+# GLFW を用いた実装
+$ python demo/sample_glfw.py -p <pmd, pmx model path> -v <vmd motion path>      
+
+# 古典的なOpenGLの実装
+$ python demo/sample_legacy.py -p <pmd, pmx model path> -v <vmd motion path>    
 ```
