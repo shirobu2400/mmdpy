@@ -1,6 +1,6 @@
 import numpy as np
-import quaternion
 from typing import Any, List, Union
+from scipy.spatial.transform import Rotation
 
 
 def normalize(v):
@@ -18,10 +18,11 @@ class mmdpyIK:
 
 class mmdpyBone:
     def __init__(self,
-                 index: int, name: str,
+                 index: int, name: str, level: int,
                  position: np.ndarray, weight: float,
                  rotatable_control: Any):
         self.id: int = index
+        self.level: int = level
         self.name: str = name
         self.weight: float = weight
 
@@ -58,7 +59,27 @@ class mmdpyBone:
         self.data: Any = None
         self.ik: Union[None, mmdpyIK] = None
 
-        self.init_update_matrix()
+        self.grant_rotation_parent_bone: Any = None
+        self.grant_rotation_parent_rate: float = 0
+        self.grant_translate_parent_bone: Any = None
+        self.grant_translate_parent_rate: float = 0
+
+    # 実行順序
+    # pmd ではすべて 0
+    # pmx にはIKや付与など実行順序がある
+    def get_level(self) -> int:
+        return self.level
+
+    # 追従して動くボーンを設定
+    # 回転付与
+    def set_grant_rotation_parent_bone(self, bone: Any, rate: float) -> None:
+        self.grant_rotation_parent_bone = bone
+        self.grant_rotation_parent_rate = rate
+
+    # 移動付与
+    def set_grant_translate_parent_bone(self, bone: Any, rate: float) -> None:
+        self.grant_translate_parent_bone = bone
+        self.grant_translate_parent_rate = rate
 
     # ik
     def set_ik(self, ik: mmdpyIK):
@@ -80,37 +101,19 @@ class mmdpyBone:
     def get_local_matrix(self):
         return self.offset_matrix
 
-    # 今のボーンを更新
-    def update_matrix(self, count_flag: bool = False) -> np.ndarray:
-        if count_flag:
-            if self.update_matrix_count > 0:
-                return self.global_matrix
-            self.update_matrix_count += 1
-
-        local_matrix = np.identity(4)
+    # グローバルマトリックスを返す
+    def get_global_matrix(self) -> np.ndarray:
         global_matrix = self.top_matrix
         if self.parent is not None:
-            parent_matrix = self.parent.update_matrix()
+            parent_matrix = self.parent.get_global_matrix()
             global_matrix = np.matmul(self.part_matrix, parent_matrix)  # ボーンのローカル座標系に変換
-        global_matrix = np.matmul(self.delta_matrix, global_matrix)  # 移動量を反映
+        return np.matmul(self.delta_matrix, global_matrix)  # 移動量を反映
 
-        local_matrix = np.matmul(local_matrix, self.offset_matrix)  # ボーンのローカル座標系に変換
-        local_matrix = np.matmul(local_matrix, global_matrix)  # グローバル座標系に変換
-        self.local_matrix = local_matrix
-        self.global_matrix = global_matrix
+    # 今のボーンを更新
+    def update_matrix(self) -> np.ndarray:
+        self.global_matrix = self.get_global_matrix()
+        self.local_matrix = np.matmul(self.offset_matrix, self.global_matrix)  # ボーンのローカル座標系に変換、グローバル座標系に変換
         return self.global_matrix
-
-    # ボーンの更新処理準備
-    def init_update_matrix(self):
-        self.update_matrix_count = 0
-
-    # 反映用のローカルマトリックスを強制的に変換
-    def update_local_matrix(self) -> np.ndarray:
-        local_matrix = np.identity(4)
-        local_matrix = np.matmul(local_matrix, self.offset_matrix)  # ボーンのローカル座標系に変換
-        local_matrix = np.matmul(local_matrix, self.global_matrix)  # グローバル座標系に変換
-        self.local_matrix = local_matrix
-        return self.local_matrix
 
     # ボーン構造表示
     def print_childs(self, indent: str = "", last_flag: bool = False):
@@ -139,7 +142,7 @@ class mmdpyBone:
         return self
 
     # position
-    def get_position(self):
+    def get_position(self) -> np.ndarray:
         return self.global_matrix[3, 0: 3]
 
     def set_position(self, p: Union[List[float], np.ndarray]) -> Union[List[float], np.ndarray]:
@@ -147,18 +150,27 @@ class mmdpyBone:
         return p
 
     # quaternion
-    def get_quaternion(self):
-        # q = quaternion.from_rotation_matrix(self.update_matrix()[0 :3, 0 :3])
-        q = quaternion.from_rotation_matrix(self.global_matrix[:3, :3])
-        q = quaternion.as_float_array(q)
-        q = normalize(q)
+    def get_quaternion(self) -> np.ndarray:
+        rot = Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        q = rot.as_quat()
         return q
 
-    def set_quaternion(self, q: Union[List[float], np.ndarray]):
-        q = quaternion.as_quat_array(q)
-        q = quaternion.as_rotation_matrix(q)
-        self.global_matrix[:3, :3] = q
+    def set_quaternion(self, q: Union[List[float], np.ndarray]) -> np.ndarray:
+        rot = Rotation.from_quat(q)
+        m = rot.as_matrix()
+        self.global_matrix[0:3, 0:3] = m
         return self.global_matrix
+
+    # 変化量
+    # position
+    def get_position_delta(self) -> np.ndarray:
+        return self.delta_matrix[3, 0: 3]
+
+    # quaternion
+    def get_quaternion_delta(self) -> np.ndarray:
+        rot = Rotation.from_matrix(self.delta_matrix[0:3, 0:3])
+        q = rot.as_quat()
+        return q
 
     # スライドさせる
     def slide(self, p: Union[List[float], np.ndarray]):
@@ -169,40 +181,44 @@ class mmdpyBone:
         return self.add_matrix(matrix)
 
     # ik 付き
-    def move(self, target_position: Union[List[float], np.ndarray], chain: Union[None, List[Any]] = None,
-             loop_size: int = 1, depth: int = 1, loop_range: int = 256):
-        bias = 1e-4
+    def move(self, target_position: Union[List[float], np.ndarray],
+             chain: Union[None, List[Any]] = None,
+             loop_size: int = 1, depth: int = 0, loop_range: int = 256):
+        bias = 1e-3
         if loop_size > loop_range:
             loop_size = loop_range
 
-        effect_bone = self
+        effect_bone: mmdpyBone = self
         if chain is None:
             chain = []
-            parent: Any = self
+            parent: mmdpyBone = self
             for _ in range(depth):
-                parent = parent.parent
-                if parent is not None:
+                if parent.parent is not None:
+                    parent = parent.parent
                     chain.append(parent)
 
         target_matrix = np.identity(4)
-        target_matrix[3, :3] = np.asarray(target_position)
+        target_matrix[3, :3] = np.array(target_position)
         for _ in range(loop_size):  # ik step
             rot = 0
+            conflag = True
             for c in chain:
-                effector_matrix = c.global_matrix
+                effector_matrix = c.get_global_matrix()
                 base_matrix = np.linalg.inv(effector_matrix)
 
                 # 目的地
                 local_target_pos = np.matmul(target_matrix, base_matrix)[3, :3]
                 dsum = np.sum(np.abs(local_target_pos))
                 if np.isnan(dsum) or dsum < bias:
+                    conflag = False
                     break
                 local_target_pos = normalize(local_target_pos)
 
                 # 向かうボーンの方向
-                local_effect_pos = np.matmul(effect_bone.update_matrix(), base_matrix)[3, :3]
+                local_effect_pos = np.matmul(effect_bone.get_global_matrix(), base_matrix)[3, :3]
                 dsum = np.sum(np.abs(local_effect_pos))
                 if np.isnan(dsum) or dsum < bias:
+                    conflag = False
                     break
                 local_effect_pos = normalize(local_effect_pos)
 
@@ -212,29 +228,30 @@ class mmdpyBone:
                 # 移動予定角度を指定
                 rot = np.arccos(dot_value)
                 if abs(rot) < bias:
+                    conflag = False
                     break
 
                 # 回転軸を計算
                 axis = np.cross(local_effect_pos, local_target_pos)
                 axis_sum = np.sum(np.abs(axis))
                 if np.isnan(axis_sum) or axis_sum < bias:
+                    conflag = False
                     break
                 axis = normalize(axis)
 
                 # 回転制御付き回転
                 c.rotatable_control(c, axis, rot)
 
-            if abs(rot) < bias:
+                if abs(rot) < bias:
+                    conflag = False
+                    break
+
+            if not conflag:
                 break
 
         return self
 
     def rot(self, axis: np.ndarray, r: float, overwrite: bool = False, update_flag: bool = True):
-        if abs(r) < 1e-4:
-            if not update_flag:
-                return np.identity(4)
-            return self
-
         axis = normalize(axis)
         matrix = np.identity(4)
 
@@ -254,6 +271,34 @@ class mmdpyBone:
         matrix[2, 0] = z * x * c + y * sin_r
         matrix[2, 1] = z * y * c - x * sin_r
         matrix[2, 2] = z * z * c + cos_r
+        if not update_flag:
+            return matrix
+        return self.add_matrix(matrix, overwrite=overwrite)
+
+    def set_rot(self, x, y, z, overwrite: bool = False, update_flag: bool = True):
+        sinx = np.sin(x)
+        cosx = np.cos(x)
+
+        siny = np.sin(y)
+        cosy = np.cos(y)
+
+        sinz = np.sin(z)
+        cosz = np.cos(z)
+
+        matrix = np.identity(4)
+
+        matrix[0][0] = cosy * cosz - sinx * siny * sinz
+        matrix[0][1] = -cosx * sinz
+        matrix[0][2] = siny * cosz + sinx * cosy * sinz
+
+        matrix[1][0] = cosy * sinz + sinx * siny * cosz
+        matrix[1][1] = cosx * cosz
+        matrix[1][2] = sinz * siny - sinx * cosy * cosz
+
+        matrix[2][0] = -cosx * siny
+        matrix[2][1] = sinx
+        matrix[2][2] = cosx * cosy
+
         if not update_flag:
             return matrix
         return self.add_matrix(matrix, overwrite=overwrite)
@@ -287,3 +332,39 @@ class mmdpyBone:
         if not update_flag:
             return matrix
         return self.add_matrix(matrix, overwrite=overwrite)
+
+    def get_rot(self, matrix_type=lambda x: x.global_matrix):
+        threshold: float = 0.001
+        m = matrix_type(self)
+
+        angle_x: float = 0.00
+        angle_y: float = 0.00
+        angle_z: float = 0.00
+        if abs(m[2][1] - 1) < threshold:
+            angle_x = np.pi / 2.00
+            angle_y = 0
+            angle_x = np.arctan2(m[1][0], m[0][0])
+        elif abs(m[2][1] + 1) < threshold:
+            angle_x = -np.pi / 2.00
+            angle_y = 0
+            angle_x = np.arctan2(m[1][0], m[0][0])
+        else:
+            angle_x = np.arcsin(m[2][1])
+            angle_y = np.arctan2(-m[2][0], m[2][2])
+            angle_z = np.arctan2(-m[0][1], m[1][1])
+
+        return (angle_x, angle_y, angle_z)
+
+    # 追従動作
+    def grant(self) -> None:
+        # 回転
+        if self.grant_rotation_parent_bone is not None:
+            r = self.grant_rotation_parent_rate
+            x, y, z = self.grant_rotation_parent_bone.get_rot(lambda x: x.delta_matrix)
+            self.set_rot(x * r, y * r, z * r, update_flag=True)
+
+        # 移動
+        if self.grant_translate_parent_bone is not None:
+            r = self.grant_translate_parent_rate
+            p = self.grant_translate_parent_bone.get_position() * r
+            self.set_position(p)

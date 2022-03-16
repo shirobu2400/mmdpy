@@ -3,6 +3,7 @@
 .vscode
 __pycache__
 py3.9
+.python-version
 
 mmdpy.egg-info
 dist
@@ -10,6 +11,7 @@ build
 
 glut32.dll
 install.sh
+get-pip.py
 wheel/
 
 demo/motion/
@@ -22,7 +24,13 @@ demo/models
 demo/media
 
 demo.bat
+demo2.bat
 demo.sh
 wsl.xserver.txt
 
+temp.vmd
+
 mmdpy/backup
+
+# 作成途中
+demo/sample_generateing_rotate_motion.py

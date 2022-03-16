@@ -1,7 +1,9 @@
+from __future__ import annotations
 import struct
 import os
 from typing import List, Tuple, Any
 from dataclasses import dataclass, field
+import numpy as np
 
 
 @dataclass
@@ -32,7 +34,7 @@ class mmdpyVmd:
         end_point = 0
         bins = self.str_to_hex(_string)
         length = len(_string)
-        while bins[end_point] != ps and end_point < length - 1:
+        while end_point < length - 1 and bins[end_point] != ps:
             end_point += 1
         return _string[:end_point]
 
@@ -61,7 +63,7 @@ class mmdpyVmd:
         # #### #### data #### ####
 
         # Bone
-        loop_size = struct.unpack_from("i", fp.read(4))[0]
+        loop_size = struct.unpack_from("L", fp.read(4))[0]
         for _ in range(loop_size):
             motion = mmdpyVmdMotion()
 
@@ -69,7 +71,7 @@ class mmdpyVmd:
             motion.bonename = self.padding_erase(motion.bonename, 'f8')
             motion.bonename = self.padding_erase(motion.bonename, '00')
 
-            motion.frame = struct.unpack_from("i", fp.read(4))[0]
+            motion.frame = struct.unpack_from("L", fp.read(4))[0]
             motion.vector = struct.unpack_from("3f", fp.read(12))
             motion.quaternion = struct.unpack_from("4f", fp.read(16))
             motion.interpolation = struct.unpack_from("16f", fp.read(64))
@@ -79,5 +81,86 @@ class mmdpyVmd:
 
         # Skin
         # これから実装するかも
+        fp.close()
+
+        return True
+
+    # 共有のMotionデータからVMDを生成
+    def convert_vmd(self, motions: Any) -> mmdpyVmd:
+        vmd: mmdpyVmd = mmdpyVmd()
+        for bonename, motion_list in motions.motions.items():
+            for motion in motion_list:
+                if not motion:
+                    continue
+                vmd_motion: mmdpyVmdMotion = mmdpyVmdMotion()
+
+                vmd_motion.bonename = bonename
+                vmd_motion.frame = motion.get_frame()
+                vmd_motion.vector = motion.get_position()
+                q = motion.get_quaternion()
+                vmd_motion.quaternion = (-q[0], -q[1], -q[2], q[3])
+                vmd_motion.interpolation = np.zeros(4 * 4, dtype=np.float16).tolist()
+
+                vmd.motions.append(vmd_motion)
+
+        return vmd
+
+    def save(self, filename: str, motions: mmdpyVmd) -> bool:
+
+        self.filename = filename
+        self.path, self.ext = os.path.splitext(filename)
+        self.directory = os.path.dirname(filename) + "/"
+
+        try:
+            fp = open(filename, "wb")
+        except IOError:
+            return False
+
+        # header
+        fp.write(b'Vocaloid Motion Data 0002\x00\x00\x00\x00\x00')
+        fp.write(b'Dummy Model Name    ')
+
+        fp.write(struct.pack('<L', len(motions.motions)))
+        for motion in motions.motions:
+
+            # ボーン名
+            bonename = motion.bonename.encode("cp932", "ignore")
+            fp.write(bonename)
+            fp.write(bytearray([0 for _ in range(len(bonename), 15)]))
+
+            # フレーム番号
+            fp.write(struct.pack("<L", motion.frame))
+
+            # 座標
+            fp.write(struct.pack("<f", motion.vector[0]))
+            fp.write(struct.pack("<f", motion.vector[1]))
+            fp.write(struct.pack("<f", motion.vector[2]))
+
+            # クォータニオン
+            fp.write(struct.pack("<f", motion.quaternion[0]))
+            fp.write(struct.pack("<f", motion.quaternion[1]))
+            fp.write(struct.pack("<f", motion.quaternion[2]))
+            fp.write(struct.pack("<f", motion.quaternion[3]))
+
+            # 補完パラメータ保存
+            fp.write(bytearray([0 for _ in range(0, 64)]))
+
+        # これから実装するかも
+        # スキン
+        fp.write(struct.pack('<L', 0))
+
+        # カメラキーフレーム数
+        fp.write(struct.pack('<L', 0))
+
+        # 照明キーフレーム数
+        fp.write(struct.pack('<L', 0))
+
+        # セルフ影キーフレーム数
+        fp.write(struct.pack('<L', 0))
+
+        # モデル表示・IK on/offキーフレーム数
+        fp.write(struct.pack('<L', 0))
+
+        fp.close()
 
         return True

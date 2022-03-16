@@ -281,4 +281,5 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
 
             data.physics.joint.append(joint)
 
+    fp.close()
     return data

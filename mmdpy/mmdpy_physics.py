@@ -56,8 +56,8 @@ class mmdpyPhysics:
 
         # joint
         for c in self.joint:
-            self.body[c.rigidbody_a].bone.update_matrix()
-            self.body[c.rigidbody_b].bone.update_matrix()
+            self.body[c.rigidbody_a].bone.get_global_matrix()
+            self.body[c.rigidbody_b].bone.get_global_matrix()
             rigidbody_a_pos = self.body[c.rigidbody_a].bone.get_position()
             rigidbody_b_pos = self.body[c.rigidbody_b].bone.get_position()
             rigidbody_a_pos = self.convert_position(rigidbody_a_pos)
@@ -108,4 +108,3 @@ class mmdpyPhysics:
 
                 r.bone.set_position(p)
                 r.bone.set_quaternion(q)
-                r.bone.update_local_matrix()

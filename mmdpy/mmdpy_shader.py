@@ -90,7 +90,7 @@ class mmdpyShader:
         glsl_info.color = material.color
         glsl_info.alpha = glsl_info.alpha
 
-    def set_boneMatrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: List[np.ndarray]) -> None:
+    def set_bone_matrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: List[np.ndarray]) -> None:
         matrices = []
         for _ in range(MMDPY_MATERIAL_USING_BONE_NUM):
             matrices.append(matrix)
@@ -151,13 +151,15 @@ class mmdpyShader:
             void main( void )
             {
                 mat4            skinTransform;
+                vec4            pvec;
 
                 skinTransform  = BoneWeights[ 0 ] * BoneMatrix[ int( BoneIndices[ 0 ] ) ];
                 skinTransform += BoneWeights[ 1 ] * BoneMatrix[ int( BoneIndices[ 1 ] ) ];
                 skinTransform += BoneWeights[ 2 ] * BoneMatrix[ int( BoneIndices[ 2 ] ) ];
                 skinTransform += BoneWeights[ 3 ] * BoneMatrix[ int( BoneIndices[ 3 ] ) ];
 
-                gl_Position = ProjectionMatrix * skinTransform * vec4( Vertex, 1.00 );
+                pvec = ProjectionMatrix * skinTransform * vec4( Vertex, 1.00 );
+                gl_Position = vec4( -pvec[ 0 ], pvec[ 1 ], pvec[ 2 ], pvec[ 3 ] );  // 座標系による反転を行う、カリングも反転
                 ShareUV = InputUV;
                 ShareColor = InputColor;
             }

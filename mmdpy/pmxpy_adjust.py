@@ -4,7 +4,7 @@ import os
 from . import mmdpy_texture
 from . import mmdpy_type
 from . import pmxpy_type
-from typing import Any, cast, Union
+from typing import Any, cast, Union, Dict
 
 
 # #### #### PMD Adjuster #### ####
@@ -32,11 +32,11 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
     m_top = 0
     for mm in pmx_data.material:
         m = mmdpy_type.mmdpyTypeMaterial()
-        m.diffuse = np.asarray(mm.diffuse)
+        m.diffuse = np.array(mm.diffuse)
         m.alpha = 1.00  # cast(float, mm.specular_scale)
-        m.specularity = np.asarray(mm.specular_color)
-        m.specular_color = np.asarray(mm.specular_color)
-        m.mirror_color = np.asarray(mm.ambient_color)
+        m.specularity = np.array(mm.specular_color)
+        m.specular_color = np.array(mm.specular_color)
+        m.mirror_color = np.array(mm.ambient_color)
         m.toon_index = mm.texture_index
         m.edge_size = mm.edge_size
         m.face_vert_count = mm.face_vert_count
@@ -45,13 +45,17 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
         m.size = m.face_vert_count
         m_top += m.size
 
+        loaded_textures: Dict[str, mmdpy_texture.mmdpyTexture] = {}
         m.texture = None
         m.texture_name = mm.texrure_name
         if len(m.texture_name) > 0:
             if "*" in str(m.texture_name):
                 m.texture_name = m.texture_name[:str(m.texture_name).find("*")]
             texture_path = os.path.join(pmx_data.directory, cast(str, m.texture_name))
-            m.texture = mmdpy_texture.mmdpyTexture(texture_path)
+
+            if texture_path not in loaded_textures.keys():
+                loaded_textures[texture_path] = mmdpy_texture.mmdpyTexture(texture_path)
+            m.texture = loaded_textures[texture_path]
         m.both_side_flag = ((mm.bit_flag & 0x01) != 0x00)
         m.color = m.diffuse
         if m.texture is not None:
@@ -63,12 +67,14 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
     for i, bb in enumerate(pmx_data.bone):
         b = mmdpy_type.mmdpyTypeBone()
         b.id = i
+        b.level = bb.level  # 実行順の階層
         b.parent_id = bb.parent_id
         b.position = np.asarray(bb.position)
         b.name = bb.name.replace("\x00", "")
         b.weight = 1.00
         b.rotatable_control = lambda b, axis, rot: b.rot(axis, rot * b.weight)
 
+        # IK処理
         b.ik = None
         if bb.ik:
             ik = mmdpy_type.mmdpyTypeIK()
@@ -79,6 +85,19 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
             b.ik = ik
 
         adjust_data.bones.append(b)
+
+    # 付与親の処理
+    for b, bb in zip(adjust_data.bones, pmx_data.bone):
+        b.grant_rotation_parent_bone_index = None
+        b.grant_translate_parent_bone_index = None
+
+        if bb.grant_rotation_flag:
+            b.grant_rotation_parent_bone_index = bb.grant_rotation_index
+            b.grant_rotation_parent_rate = bb.grant_rotation_rate
+
+        if bb.grant_translate_flag:
+            b.grant_translate_parent_bone_index = bb.grant_translate_index
+            b.grant_translate_parent_rate = bb.grant_translate_rate
 
     # # #### #### IK #### ####
     # for pmd_ik in pmx_data.ik:

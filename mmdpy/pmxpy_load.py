@@ -325,4 +325,5 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
     # #### #### 剛体 #### ####
     # #### #### ジョイント #### ####
 
+    fp.close()
     return data

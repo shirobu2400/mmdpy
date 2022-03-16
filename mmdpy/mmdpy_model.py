@@ -49,10 +49,11 @@ class mmdpyModel:
     def create_bones(self, data: mmdpy_type.mmdpyTypeModel) -> None:
         self.bones: List[mmdpy_bone.mmdpyBone] = [
             mmdpy_bone.mmdpyBone(
-                bone.id, bone.name,
+                bone.id, bone.name, bone.level,
                 bone.position, bone.weight,
                 bone.rotatable_control)
             for bone in data.bones]
+
         for i, bone_i in enumerate(data.bones):
             self.bones[i].set_parent_bone(self.bones[bone_i.parent_id])
             self.name2bone[bone_i.name] = bone_i.id
@@ -65,6 +66,19 @@ class mmdpyModel:
                     [self.bones[i] for i in bone_i.ik.child_bones_index]
                 )
                 self.bones[i].set_ik(ik_model)
+            if data.bones[i].grant_rotation_parent_bone_index is not None:
+                self.bones[i].set_grant_rotation_parent_bone(
+                    self.bones[data.bones[i].grant_rotation_parent_bone_index],
+                    data.bones[i].grant_rotation_parent_rate
+                )
+
+            if data.bones[i].grant_translate_parent_bone_index is not None:
+                self.bones[i].set_grant_translate_parent_bone(
+                    self.bones[data.bones[i].grant_translate_parent_bone_index],
+                    data.bones[i].grant_translate_parent_rate
+                )
+
+        self.ikbones: List[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_ik() is not None]
 
     def create_physics(self, physics_flag: bool, data: mmdpy_type.mmdpyTypeModel) -> None:
         # physics infomation
@@ -82,19 +96,24 @@ class mmdpyModel:
 
     # Bone Matrix update
     def update_bone(self) -> mmdpyModel:
-        for b in self.bones:
-            b.update_matrix(count_flag=True)
-        for b in self.bones:
-            b.init_update_matrix()
-        return self
+        # 実行レベル順に実施
+        level_max = max([x.get_level() for x in self.bones])
+        for level in range(level_max + 1):
+            for b in self.bones:
+                if b.get_level() == level:
+                    # IK
+                    ikbone: Union[None, mmdpy_bone.mmdpyIK] = b.get_ik()
+                    if ikbone is not None:
+                        target_vector = b.get_global_matrix()[3, 0: 3]
+                        ikbone.effect_bone.move(target_vector, chain=ikbone.child_bones, loop_size=ikbone.iteration)
 
-    # IK update
-    def update_ik(self) -> mmdpyModel:
-        for ik_bone in [x for x in self.bones if x.get_ik() is not None]:
-            ik_local = ik_bone.get_ik()
-            if ik_local is not None:
-                target_vector = ik_bone.update_matrix()[3, :3]
-                ik_local.effect_bone.move(target_vector, chain=ik_local.child_bones, loop_size=ik_local.iteration)
+                    # 付与
+                    b.grant()
+
+        # ボーンの姿勢行列を更新
+        for b in self.bones:
+            b.update_matrix()
+
         return self
 
     def update_physics(self) -> mmdpyModel:
@@ -178,7 +197,6 @@ class mmdpyModel:
                             bone_counter += 1
                             if bone_counter >= MMDPY_MATERIAL_USING_BONE_NUM - 1:
                                 is_bone_range = True
-                                break
 
                         v.bone_id[i] = rawbone_2_newbone[vbone_i]
                         using_bones[vbone_i] += 1

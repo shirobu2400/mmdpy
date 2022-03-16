@@ -59,6 +59,12 @@ class mmdpyTypeBone():
     ik: Union[None, mmdpyTypeIK] = field(default=None)
     rotatable_control: Any = field(init=False)
 
+    level: int = field(default=0)  # 実行順の階層
+    grant_rotation_parent_bone_index: Any = field(default=None)
+    grant_rotation_parent_rate: float = field(default=0)
+    grant_translate_parent_bone_index: Any = field(default=None)
+    grant_translate_parent_rate: float = field(default=0)
+
 
 @dataclass
 class mmdpyTypePhysicsBody():

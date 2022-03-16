@@ -1,16 +1,15 @@
 import OpenGL.GL as gl
 import OpenGL.GLU as glu
-from typing import cast
 import glfw
+from typing import cast
 import mmdpy
 import argparse
 
 
-width = 640
-height = 480
-
-
 def main():
+
+    width = 640
+    height = 480
 
     # Set argment parsers
     parser = argparse.ArgumentParser(description="MMD model viewer sample.")
@@ -24,8 +23,8 @@ def main():
         return
 
     # Create window
-    window = glfw.create_window(width, height, 'mmdpy sample', None, None)
-    if not window:
+    gl_window = glfw.create_window(width, height, 'mmdpy sample', None, None)
+    if not gl_window:
         glfw.terminate()
         print('Failed to create window')
         return
@@ -33,7 +32,7 @@ def main():
     # Create context
     # glfw.set_window_size_callback(window, window_size)
     # glfw.set_window_refresh_callback(window, window_refresh)
-    glfw.make_context_current(window)
+    glfw.make_context_current(gl_window)
 
     # OpenGL Version
     print('Vendor :', gl.glGetString(gl.GL_VENDOR))
@@ -60,14 +59,43 @@ def main():
     if motion_name != "" and not model.motion("vmd").load(motion_name):
         raise IOError("Motion is not found")
 
-    while not glfw.window_should_close(window):
+    gl.glClearColor(0.0, 0.0, 1.0, 1.0)
+    gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading
+
+    # modeling transform
+    gl.glMatrixMode(gl.GL_MODELVIEW)
+
+    # light color
+    light_ambient = [0.25, 0.25, 0.25]
+    light_diffuse = [1.0, 1.0, 1.0]
+    light_specular = [1.0, 1.0, 1.0]
+
+    # light position
+    light_position = [0, 0, 2, 1]
+
+    # light setting
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_AMBIENT, light_ambient)
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_DIFFUSE, light_diffuse)
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_SPECULAR, light_specular)
+    gl.glLightfv(gl.GL_LIGHT0, gl.GL_POSITION, light_position)
+    gl.glEnable(gl.GL_LIGHT0)
+    gl.glEnable(gl.GL_LIGHTING)
+
+    while not glfw.window_should_close(gl_window):
+
+        # Projection matrix
+        width, height = glfw.get_framebuffer_size(gl_window)
+        if width == 0 or height == 0:
+            continue
+
+        gl.glViewport(0, 0, width, height)
+        gl.glLoadIdentity()
+        glu.gluPerspective(45.0, float(width) / float(height), 0.10, 160.0)
+
         # Set matrix mode
         gl.glClear(cast(int, gl.GL_COLOR_BUFFER_BIT) | cast(int, gl.GL_DEPTH_BUFFER_BIT))
         gl.glMatrixMode(gl.GL_MODELVIEW)
         gl.glLoadIdentity()
-
-        if height == 0:
-            continue
 
         # set perspective
         glu.gluPerspective(45.0, float(width) / float(height), 0.10, 160.0)
@@ -85,7 +113,7 @@ def main():
         gl.glFlush()
 
         # Swap front and back buffers
-        glfw.swap_buffers(window)
+        glfw.swap_buffers(gl_window)
 
         # Poll for and process events
         glfw.poll_events()
@@ -94,7 +122,7 @@ def main():
         glfw.wait_events_timeout(1. / 60)
 
     # Destory window
-    glfw.destroy_window(window)
+    glfw.destroy_window(gl_window)
 
     # finish GLFW
     glfw.terminate()

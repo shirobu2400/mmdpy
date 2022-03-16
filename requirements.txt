@@ -1,10 +1,10 @@
 mypy
-PyOpenGL
-PyOpenGL_accelerate
+scipy
 numba
 numpy
-numpy-quaternion
-quaternion
-pybullet
+PyOpenGL
+PyOpenGL_accelerate
+# pybullet
 Pillow
+# pillow-simd
 glfw

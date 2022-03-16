@@ -37,14 +37,15 @@ class mmdpyMesh:
         self.shader.set_material(self.glsl_info, self.material)
 
     def draw(self) -> None:
-        self.shader.set_boneMatrix(self.glsl_info, [x.local_matrix for x in self.bone])
+        self.shader.set_bone_matrix(self.glsl_info, [x.local_matrix for x in self.bone])
         gl.glEnable(gl.GL_DEPTH_TEST)
         if self.both_side_flag:
             gl.glDisable(gl.GL_CULL_FACE)
         else:
             gl.glEnable(gl.GL_CULL_FACE)
             gl.glFrontFace(gl.GL_CCW)
-            gl.glCullFace(gl.GL_BACK)
+            gl.glCullFace(gl.GL_FRONT)
+            # gl.glCullFace(gl.GL_BACK)
         gl.glEnable(gl.GL_TEXTURE_2D)
         gl.glActiveTexture(gl.GL_TEXTURE0)
         self.shader.draw(self.glsl_info)
