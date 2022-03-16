@@ -2,6 +2,7 @@ import struct
 import os
 from typing import Tuple, List, Union, cast
 from . import pmxpy_type
+import numpy as np
 
 
 # #### #### PMX Loader #### ####
@@ -42,9 +43,12 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
     index_sizeof_list = {1: "b", 2: "h", 4: "i"}
     data.encode_type = ("utf-8" if header_byte[0] == 1 else "utf-16")
     data.add_uv_flag = bool(header_byte[1] == 1)
-    data.bone_index_sizeof = ord(header_byte[5])
     data.face_index_sizeof = ord(header_byte[2])
     data.texture_index_sizeof = ord(header_byte[3])
+    data.material_index_sizeof = ord(header_byte[4])
+    data.bone_index_sizeof = ord(header_byte[5])
+    data.morph_index_sizeof = ord(header_byte[6])
+    data.rigidbody_index_sizeof = ord(header_byte[7])
 
     comment_length = struct.unpack_from("i", fp.read(4))[0]
     comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
@@ -321,9 +325,202 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
         data.bone.append(bone)
 
     # #### #### モーフ #### ####
+    loop_size = struct.unpack_from("i", fp.read(4))[0]
+    data.morph = []
+    uv_number = 0
+    for _ in range(loop_size):
+        morph = pmxpy_type.pmxpyTypeLoadMorph()
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        morph.name = comment_bytes.decode(data.encode_type)
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        morph.eng_name = comment_bytes.decode(data.encode_type)
+
+        morph.panel = ord(struct.unpack_from("c", fp.read(1))[0])
+        morph.type = ord(struct.unpack_from("c", fp.read(1))[0])
+        morph.offset_num = struct.unpack_from("i", fp.read(4))[0]
+
+        if morph.type == 1:
+            morph.vertex = []
+            for _ in range(morph.offset_num):
+                v = pmxpy_type.pmxpyTypeLoadMorphVertex()
+                v.vertex_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.face_index_sizeof]),
+                    fp.read(data.face_index_sizeof))[0])
+                v.vertex = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                morph.vertex.append(v)
+        if morph.type == 4:
+            uv_number = 0
+        if morph.type == 5:
+            uv_number = 1
+        if morph.type == 6:
+            uv_number = 2
+        if morph.type == 7:
+            uv_number = 3
+        if morph.type == 3:
+            morph.uv = []
+            for _ in range(morph.offset_num):
+                u = pmxpy_type.pmxpyTypeLoadMorphUV()
+                u.uv_number = uv_number
+                u.uv_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.face_index_sizeof]),
+                    fp.read(data.face_index_sizeof))[0])
+                u.uv = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                morph.uv.append(u)
+        if morph.type == 2:
+            morph.bone = []
+            for _ in range(morph.offset_num):
+                b = pmxpy_type.pmxpyTypeLoadMorphBone()
+                b.bone_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.bone_index_sizeof]),
+                    fp.read(data.bone_index_sizeof))[0])
+                b.translate = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                b.rotation = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                morph.bone.append(b)
+        if morph.type == 8:
+            morph.material = []
+            for _ in range(morph.offset_num):
+                m = pmxpy_type.pmxpyTypeLoadMorphMaterial()
+                m.material_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.material_index_sizeof]),
+                    fp.read(data.material_index_sizeof))[0])
+                m.calc_format = ord(struct.unpack_from("c", fp.read(1))[0])
+
+                m.diffuse = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.specular = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                m.specular_alpha = cast(float, struct.unpack_from("f", fp.read(4)))
+                m.ambient = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                m.edge_color = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.edge_size = cast(float, struct.unpack_from("f", fp.read(4)))
+                m.texture_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.sphere_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.toon_texture_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+
+                morph.material.append(m)
+        if morph.type == 0:
+            morph.group = []
+            for _ in range(morph.offset_num):
+                g = pmxpy_type.pmxpyTypeLoadMorphGroup()
+                g.grouo_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.morph_index_sizeof]),
+                    fp.read(data.morph_index_sizeof))[0])
+                g.morph_rate = cast(float, struct.unpack_from("f", fp.read(4)))
+                morph.group.append(g)
+
+        data.morph.append(morph)
+
     # #### #### 表示枠 #### ####
+    loop_size = struct.unpack_from("i", fp.read(4))[0]
+    data.disp = []
+    for _ in range(loop_size):
+        d: pmxpy_type.pmxpyTypeLoadDispFrame = pmxpy_type.pmxpyTypeLoadDispFrame()
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        d.name = comment_bytes.decode(data.encode_type)
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        d.eng_name = comment_bytes.decode(data.encode_type)
+
+        d.frame_flag = (ord(struct.unpack_from("c", fp.read(1))[0]) == 1)
+        d.index_num = struct.unpack_from("i", fp.read(4))[0]
+
+        d.indexs = []
+        for _ in range(d.index_num):
+            s: pmxpy_type.pmxpyTypeLoadDispFrameInline = pmxpy_type.pmxpyTypeLoadDispFrameInline()
+            s.index = ord(struct.unpack_from("c", fp.read(1))[0])
+            index_size = data.bone_index_sizeof
+            if s.index:
+                index_size = data.morph_index_sizeof
+            s.index = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[index_size]),
+                    fp.read(index_size))[0])
+            d.indexs.append(s)
+        data.disp.append(d)
+
     # #### #### 剛体 #### ####
+    loop_size = struct.unpack_from("i", fp.read(4))[0]
+    data.physics_flag = (loop_size > 0)
+    data.physics = pmxpy_type.pmdpyLoadPhysics()
+    data.physics.body = []
+    for _ in range(loop_size):
+        p: pmxpy_type.pmxpyTypeLoadPhysicsBody = pmxpy_type.pmxpyTypeLoadPhysicsBody()
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        p.name = comment_bytes.decode(data.encode_type)
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        p.eng_name = comment_bytes.decode(data.encode_type)
+
+        p.bone_id = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.bone_index_sizeof]),
+                    fp.read(data.bone_index_sizeof))[0])
+        p.group_id = ord(struct.unpack_from("c", fp.read(1))[0])
+        p.not_touch_group_flag = struct.unpack_from("h", fp.read(2))[0]
+
+        p.type_id = ord(struct.unpack_from("c", fp.read(1))[0])
+        p.sizes = np.asarray(struct.unpack_from("3f", fp.read(12)))
+
+        p.pos = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        p.rot = np.asarray(struct.unpack_from("3f", fp.read(12)))
+
+        p.mass = struct.unpack_from("f", fp.read(4))[0]
+        p.ac_t = struct.unpack_from("f", fp.read(4))[0]
+        p.ac_r = struct.unpack_from("f", fp.read(4))[0]
+
+        p.repulsion = struct.unpack_from("f", fp.read(4))[0]
+        p.friction = struct.unpack_from("f", fp.read(4))[0]
+
+        p.rigidbody_type = ord(struct.unpack_from("c", fp.read(1))[0])
+
+        data.physics.body.append(p)
+
     # #### #### ジョイント #### ####
+    loop_size = struct.unpack_from("i", fp.read(4))[0]
+    data.physics.joint = []
+    for _ in range(loop_size):
+        j: pmxpy_type.pmxpyTypeLoadPhysicsJoint = pmxpy_type.pmxpyTypeLoadPhysicsJoint()
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        j.name = comment_bytes.decode(data.encode_type)
+
+        comment_length = struct.unpack_from("i", fp.read(4))[0]
+        comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
+        j.eng_name = comment_bytes.decode(data.encode_type)
+
+        j.type = ord(struct.unpack_from("c", fp.read(1))[0])
+
+        if j.type != 0:
+            continue
+
+        j.a_index = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.rigidbody_index_sizeof]),
+                    fp.read(data.rigidbody_index_sizeof))[0])
+        j.b_index = cast(int, struct.unpack_from(
+                    "{}".format(index_sizeof_list[data.rigidbody_index_sizeof]),
+                    fp.read(data.rigidbody_index_sizeof))[0])
+
+        j.pos = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        j.rot = np.asarray(struct.unpack_from("3f", fp.read(12)))
+
+        j.trans_limit1 = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        j.trans_limit2 = np.asarray(struct.unpack_from("3f", fp.read(12)))
+
+        j.rot_limit1 = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        j.rot_limit2 = np.asarray(struct.unpack_from("3f", fp.read(12)))
+
+        j.spring_pos = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        j.spring_rot = np.asarray(struct.unpack_from("3f", fp.read(12)))
+        j.spring_rot = np.array([r * np.pi / 180.0 for r in j.spring_rot])
+
+        data.physics.joint.append(j)
 
     fp.close()
     return data

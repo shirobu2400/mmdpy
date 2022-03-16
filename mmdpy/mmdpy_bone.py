@@ -55,6 +55,8 @@ class mmdpyBone:
 
         self.rotatable_control = rotatable_control
 
+        self.rotate: np.ndarray = np.zeros(3)
+
         # 読み込みデータ保存
         self.data: Any = None
         self.ik: Union[None, mmdpyIK] = None
@@ -88,6 +90,11 @@ class mmdpyBone:
     def get_ik(self) -> Union[None, mmdpyIK]:
         return self.ik
 
+    # 方向計算
+    def calc_rotate(self, next_bone) -> np.ndarray:
+        self.rotate = normalize(next_bone.get_position() - self.get_position())
+        return self.rotate
+
     # 親ボーン設定
     def set_parent_bone(self, parent):
         if self.id < parent.id:
@@ -113,6 +120,8 @@ class mmdpyBone:
     def update_matrix(self) -> np.ndarray:
         self.global_matrix = self.get_global_matrix()
         self.local_matrix = np.matmul(self.offset_matrix, self.global_matrix)  # ボーンのローカル座標系に変換、グローバル座標系に変換
+        if self.parent is not None:
+            self.parent.calc_rotate(self)
         return self.global_matrix
 
     # ボーン構造表示

@@ -140,7 +140,7 @@ class model:
             return False
         self.model.set_model(self.data)
         self.model.update_bone()
-        self.model.create_physics(self.data.physics_flag, self.data)
+        # self.model.create_physics(self.data.physics_flag, self.data)
 
         self.runnable = True
         return True
@@ -157,8 +157,8 @@ class model:
         if not self.runnable:
             return self
 
-        # self.model.update_physics()
         self.model.update_bone()
+        self.model.update_physics()
         self.model.draw()
 
         # bone 初期化

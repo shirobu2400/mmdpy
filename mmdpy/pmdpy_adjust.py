@@ -54,7 +54,7 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
             texture_path = os.path.join(pmd_data.directory, cast(str, m.texture_name))
             m.texture = mmdpy_texture.mmdpyTexture(texture_path)
         m.both_side_flag = (mm.alpha < 1 - 1e-8)
-        m.color = np.concatenate(m.diffuse, [m.alpha])
+        m.color = np.array(list(m.diffuse) + [m.alpha])
         if m.texture is not None:
             m.color[3] = 0
 

@@ -1,5 +1,6 @@
-from typing import Union, Any, List, Tuple, Dict
+from typing import Union, List, Tuple
 from dataclasses import dataclass, field
+import numpy as np
 
 
 @dataclass
@@ -100,94 +101,135 @@ class pmxpyTypeLoadBone():
     ik: Union[pmxpyTypeLoadIK, None] = field(default=None)
 
 
+# モーフ
 @dataclass
-class pmdpyTypeLoadSkin():
+class pmxpyTypeLoadMorphVertex():
+    vertex_id: int = field(init=False)
+    vertex: Tuple[float, float, float] = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadMorphUV():
+    uv_number: int = field(init=False)
+    uv_id: int = field(init=False)
+    uv: Tuple[float, float, float, float] = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadMorphBone():
+    bone_id: int = field(init=False)
+    translate: Tuple[float, float, float] = field(init=False)
+    rotation: Tuple[float, float, float, float] = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadMorphMaterial():
+    material_id: int = field(init=False)
+    calc_format: int = field(init=False)
+    diffuse: Tuple[float, float, float, float] = field(init=False)
+    specular: Tuple[float, float, float] = field(init=False)
+    specular_alpha: float = field(init=False)
+    ambient: Tuple[float, float, float] = field(init=False)
+    edge_color: Tuple[float, float, float, float] = field(init=False)
+    edge_size: float = field(init=False)
+    texture_alpha: Tuple[float, float, float, float] = field(init=False)
+    sphere_alpha: Tuple[float, float, float, float] = field(init=False)
+    toon_texture_alpha: Tuple[float, float, float, float] = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadMorphGroup():
+    grouo_id: int = field(init=False)
+    morph_rate: float = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadMorph():
     name: str = field(init=False)
-    var_size: int = field(init=False)
+    eng_name: str = field(init=False)
+    panel: int = field(init=False)
     type: int = field(init=False)
-    var_id: List[int] = field(init=False)
-    ver_offset: List[Tuple[float, float, float]] = field(init=False)
+    offset_num: int = field(init=False)
+
+    vertex: List[pmxpyTypeLoadMorphVertex] = field(init=False)
+    uv: List[pmxpyTypeLoadMorphUV] = field(init=False)
+    bone: List[pmxpyTypeLoadMorphBone] = field(init=False)
+    material: List[pmxpyTypeLoadMorphMaterial] = field(init=False)
+    group: List[pmxpyTypeLoadMorphGroup] = field(init=False)
+
+    morph_flag: int = field(init=False)
+    morph_step: float = field(init=False)
+    sjis_name: str = field(init=False)
+
+
+# 表示枠
+@dataclass
+class pmxpyTypeLoadDispFrameInline():
+    type: int = field(init=False)
+    index: int = field(init=False)
 
 
 @dataclass
-class pmdpyTypeLoadBoneName():
-    id: int = field(init=False)
-    frame: int = field(init=False)
-
-
-@dataclass
-class pmdpyTypeLoadPhysicsBodyVector():
-    x: float = field(init=False)
-    y: float = field(init=False)
-    z: float = field(init=False)
-
-
-@dataclass
-class pmdpyTypeLoadPhysicsBody():
+class pmxpyTypeLoadDispFrame():
     name: str = field(init=False)
+    eng_name: str = field(init=False)
+    frame_flag: int = field(init=False)
+
+    index_num: int = field(init=False)
+    indexs: List[pmxpyTypeLoadDispFrameInline] = field(init=False)
+
+
+@dataclass
+class pmxpyTypeLoadPhysicsBody():
+    name: str = field(init=False)
+    eng_name: str = field(init=False)
+
     bone_id: int = field(init=False)
     group_id: int = field(init=False)
-    group_mask: str = field(init=False)
+    not_touch_group_flag: str = field(init=False)
+
     type_id: int = field(init=False)
-    sizes: pmdpyTypeLoadPhysicsBodyVector = field(init=False)
-    pos: Tuple[Any, ...] = field(init=False)
-    rot: Tuple[Any, ...] = field(init=False)
+    sizes: np.ndarray = field(init=False)
+
+    pos: np.ndarray = field(init=False)
+    rot: np.ndarray = field(init=False)
+
     mass: float = field(init=False)
-    pos_dim: float = field(init=False)
-    rot_dim: float = field(init=False)
-    recoil: float = field(init=False)
+    ac_t: float = field(init=False)
+    ac_r: float = field(init=False)
+
+    repulsion: float = field(init=False)
     friction: float = field(init=False)
-    calc: int = field(init=False)
+    rigidbody_type: int = field(init=False)
 
 
 @dataclass
-class pmdpyTypeLoadPhysicsJoint():
+class pmxpyTypeLoadPhysicsJoint():
     name: str = field(init=False)
-    rigidbody_a: int = field(init=False)
-    rigidbody_b: int = field(init=False)
-    pos: Tuple[Any, ...] = field(init=False)
-    rot: Tuple[Any, ...] = field(init=False)
-    constrain_pos: List[Tuple[Any, ...]] = field(init=False)
-    spring_pos: Tuple[Any, ...] = field(init=False)
-    spring_rot: Tuple[Any, ...] = field(init=False)
+    eng_name: str = field(init=False)
+
+    type: int = field(init=False)
+
+    a_index: int = field(init=False)
+    b_index: int = field(init=False)
+
+    pos: np.ndarray = field(init=False)
+    rot: np.ndarray = field(init=False)
+
+    trans_limit1: np.ndarray = field(init=False)
+    trans_limit2: np.ndarray = field(init=False)
+
+    rot_limit1: np.ndarray = field(init=False)
+    rot_limit2: np.ndarray = field(init=False)
+
+    spring_pos: np.ndarray = field(init=False)
+    spring_rot: np.ndarray = field(init=False)
 
 
 @dataclass
 class pmdpyLoadPhysics():
-    body: List[pmdpyTypeLoadPhysicsBody] = field(init=False)
-    joint: List[pmdpyTypeLoadPhysicsJoint] = field(init=False)
-
-
-@dataclass
-class pmdpyTypeAdjustVertex():
-    ver: Tuple[Any, ...] = field(init=False)
-    nor: Tuple[Any, ...] = field(init=False)
-    uv: Tuple[Any, ...] = field(init=False)
-    bone_id: Tuple[Any, ...] = field(init=False)
-    bone_weight: Tuple[Any, ...] = field(init=False)
-    edge: int = field(init=False)
-
-
-@dataclass
-class pmdpyTypeBone():
-    bone_me: Union[Any, int] = field(init=False)
-    bone_to: Union[Any, int] = field(init=False)
-    len: int = field(init=False)
-    iteration: int = field(init=False)
-    weight: Any = field(init=False)
-    child_bones: Any = field(init=False)
-    ik: Any = field(init=False)
-
-
-@dataclass
-class pmdpyTypeAdjustIK():
-    bone_me: Union[Any, int] = field(init=False)
-    bone_to: Union[Any, int] = field(init=False)
-    len: int = field(init=False)
-    iteration: int = field(init=False)
-    weight: Any = field(init=False)
-    child_bones: Any = field(init=False)
-    ik: Any = field(init=False)
+    body: List[pmxpyTypeLoadPhysicsBody] = field(init=False)
+    joint: List[pmxpyTypeLoadPhysicsJoint] = field(init=False)
 
 
 @dataclass
@@ -215,23 +257,24 @@ class pmxpyType():
     # Texture index bit range
     texture_index_sizeof: int = field(default=4)
 
+    # material index bit range
+    material_index_sizeof: int = field(default=4)
+
+    # morph index bit range
+    morph_index_sizeof: int = field(default=4)
+
+    # rigidbody index bit range
+    rigidbody_index_sizeof: int = field(default=4)
+
     # load file struct
     vertex: List[pmxpyTypeLoadVertex] = field(init=False)
     face: List[Tuple[int, int, int]] = field(init=False)
     texture_name: List[str] = field(init=False)
     material: List[pmxpyTypeLoadMaterial] = field(init=False)
     bone: List[pmxpyTypeLoadBone] = field(init=False)
-    skin: List[pmdpyTypeLoadSkin] = field(init=False)
-    skin_name: List[int] = field(init=False)
-    bone_frame_name: List[str] = field(init=False)
-    bone_number: List[pmdpyTypeLoadBoneName] = field(init=False)
+    morph: List[pmxpyTypeLoadMorph] = field(init=False)
+    disp: List[pmxpyTypeLoadDispFrame] = field(init=False)
 
-    english_flag: bool = field(init=False)
-    english_head: Dict[str, str] = field(init=False)
-    bone_name_eng: List[str] = field(init=False)
-    skin_name_eng: List[str] = field(init=False)
-    bone_disp_name_eng: List[str] = field(init=False)
-
-    toon_name: List[str] = field(init=False)
     physics_flag: bool = field(init=False)
+
     physics: Union[None, pmdpyLoadPhysics] = field(init=False)
