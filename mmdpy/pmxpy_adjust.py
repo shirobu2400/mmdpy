@@ -117,10 +117,10 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
 
     # ひざの処理
     def knee_control(b: Any, axis: np.ndarray, rot: np.ndarray) -> None:
-        v = np.matmul(b.rot(axis, rot, update_flag=False), np.array([0, 0, 1, 1]))
-        if v[1] > 1e-4:
-            return
-        b.rot(axis, rot)
+        # v = np.matmul(b.rot(axis, rot, update_flag=False), np.array([0, 0, 1, 1]))
+        v = b.rot(axis, rot, update_flag=False)[:, 2]
+        if v[1] < 0.02:
+            b.rot(axis, rot)
 
     for bone in adjust_data.bones:
         if "ひざ" in bone.name:

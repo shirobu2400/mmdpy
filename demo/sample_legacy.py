@@ -22,13 +22,13 @@ class fpsCalculator:
         elapsed_time = (time.time() - top_time) / self.length
         if elapsed_time < 1e-8:
             return
-        # print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
+        print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
 
 
 model = None
 bone_information = False
 RotationAxis = [0, 0, 0]
-FPS = 60
+FPS = 30
 fps_calc = fpsCalculator()
 
 

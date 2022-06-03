@@ -4,7 +4,7 @@ numba
 numpy
 PyOpenGL
 PyOpenGL_accelerate
-# pybullet
+pybullet
 # PyODE
 Pillow
 # pillow-simd

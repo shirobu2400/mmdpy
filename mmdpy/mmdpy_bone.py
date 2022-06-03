@@ -1,6 +1,7 @@
 import numpy as np
 from typing import Any, List, Union
 from scipy.spatial.transform import Rotation
+import math
 
 
 def normalize(v):
@@ -66,6 +67,8 @@ class mmdpyBone:
         self.grant_translate_parent_bone: Any = None
         self.grant_translate_parent_rate: float = 0
 
+        self.updated_flag: bool = False
+
     # 実行順序
     # pmd ではすべて 0
     # pmx にはIKや付与など実行順序がある
@@ -108,20 +111,36 @@ class mmdpyBone:
     def get_local_matrix(self):
         return self.offset_matrix
 
+    # 更新処理をフラグで管理し処理を軽量化
+    def reset_updated_flag(self) -> None:
+        self.updated_flag = False
+
     # グローバルマトリックスを返す
-    def get_global_matrix(self) -> np.ndarray:
-        global_matrix = self.top_matrix
+    def get_global_matrix_with_flag(self) -> np.ndarray:
+        if self.updated_flag:
+            return self.global_matrix
+        global_matrix: np.ndarray = self.top_matrix
         if self.parent is not None:
-            parent_matrix = self.parent.get_global_matrix()
+            parent_matrix: np.ndarray = self.parent.get_global_matrix_with_flag()
+            global_matrix = np.matmul(self.part_matrix, parent_matrix)  # ボーンのローカル座標系に変換
+        return np.matmul(self.delta_matrix, global_matrix)  # 移動量を反映
+
+    def get_global_matrix(self) -> np.ndarray:
+        global_matrix: np.ndarray = self.top_matrix
+        if self.parent is not None:
+            parent_matrix: np.ndarray = self.parent.get_global_matrix()
             global_matrix = np.matmul(self.part_matrix, parent_matrix)  # ボーンのローカル座標系に変換
         return np.matmul(self.delta_matrix, global_matrix)  # 移動量を反映
 
     # 今のボーンを更新
     def update_matrix(self) -> np.ndarray:
-        self.global_matrix = self.get_global_matrix()
+        if self.parent and not self.parent.updated_flag:
+            self.parent.update_matrix()
+        self.global_matrix = self.get_global_matrix_with_flag()
         self.local_matrix = np.matmul(self.offset_matrix, self.global_matrix)  # ボーンのローカル座標系に変換、グローバル座標系に変換
-        if self.parent is not None:
-            self.parent.calc_rotate(self)
+        # if self.parent is not None:
+        #     self.parent.calc_rotate(self)
+        self.updated_flag = True
         return self.global_matrix
 
     # ボーン構造表示
@@ -192,8 +211,8 @@ class mmdpyBone:
     # ik 付き
     def move(self, target_position: Union[List[float], np.ndarray],
              chain: Union[None, List[Any]] = None,
-             loop_size: int = 1, depth: int = 0, loop_range: int = 256):
-        bias = 1e-3
+             loop_size: int = 1, depth: int = 0, loop_range: int = 255):
+        bias = 1e-2
         if loop_size > loop_range:
             loop_size = loop_range
 
@@ -208,27 +227,19 @@ class mmdpyBone:
 
         target_matrix = np.identity(4)
         target_matrix[3, :3] = np.array(target_position)
-        for _ in range(loop_size):  # ik step
+        for c in chain:
             rot = 0
             conflag = True
-            for c in chain:
+            for _ in range(loop_size):  # ik step
                 effector_matrix = c.get_global_matrix()
                 base_matrix = np.linalg.inv(effector_matrix)
 
                 # 目的地
                 local_target_pos = np.matmul(target_matrix, base_matrix)[3, :3]
-                dsum = np.sum(np.abs(local_target_pos))
-                if np.isnan(dsum) or dsum < bias:
-                    conflag = False
-                    break
                 local_target_pos = normalize(local_target_pos)
 
                 # 向かうボーンの方向
                 local_effect_pos = np.matmul(effect_bone.get_global_matrix(), base_matrix)[3, :3]
-                dsum = np.sum(np.abs(local_effect_pos))
-                if np.isnan(dsum) or dsum < bias:
-                    conflag = False
-                    break
                 local_effect_pos = normalize(local_effect_pos)
 
                 # 離れ具合を測る
@@ -242,18 +253,13 @@ class mmdpyBone:
 
                 # 回転軸を計算
                 axis = np.cross(local_effect_pos, local_target_pos)
-                axis_sum = np.sum(np.abs(axis))
-                if np.isnan(axis_sum) or axis_sum < bias:
+                if np.sum(np.abs(axis)) < bias:
                     conflag = False
                     break
                 axis = normalize(axis)
 
                 # 回転制御付き回転
                 c.rotatable_control(c, axis, rot)
-
-                if abs(rot) < bias:
-                    conflag = False
-                    break
 
             if not conflag:
                 break
@@ -264,8 +270,8 @@ class mmdpyBone:
         axis = normalize(axis)
         matrix = np.identity(4)
 
-        sin_r = np.sin(r)
-        cos_r = np.cos(r)
+        sin_r = math.sin(r)
+        cos_r = math.cos(r)
         c = 1.00 - cos_r
 
         x, y, z = list(axis)

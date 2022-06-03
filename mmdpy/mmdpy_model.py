@@ -10,6 +10,7 @@ from . import mmdpy_type
 from . import mmdpy_bone
 from . import mmdpy_physics
 
+
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 
 
@@ -96,21 +97,28 @@ class mmdpyModel:
 
     # Bone Matrix update
     def update_bone(self) -> mmdpyModel:
+
+        # レベルごとのボーン更新
+        def update_bone_from_level(b: mmdpy_bone.mmdpyBone) -> None:
+            # IK
+            ikbone: Union[None, mmdpy_bone.mmdpyIK] = b.get_ik()
+            if ikbone is not None:
+                target_vector = b.get_global_matrix()[3, 0: 3]
+                ikbone.effect_bone.move(target_vector, chain=ikbone.child_bones, loop_size=ikbone.iteration)
+
+            # 付与
+            b.grant()
+
         # 実行レベル順に実施
         level_max = max([x.get_level() for x in self.bones])
         for level in range(level_max + 1):
-            for b in self.bones:
-                if b.get_level() == level:
-                    # IK
-                    ikbone: Union[None, mmdpy_bone.mmdpyIK] = b.get_ik()
-                    if ikbone is not None:
-                        target_vector = b.get_global_matrix()[3, 0: 3]
-                        ikbone.effect_bone.move(target_vector, chain=ikbone.child_bones, loop_size=ikbone.iteration)
-
-                    # 付与
-                    b.grant()
+            blist: List[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_level() == level]
+            for b in blist:
+                update_bone_from_level(b)
 
         # ボーンの姿勢行列を更新
+        for b in self.bones:
+            b.reset_updated_flag()
         for b in self.bones:
             b.update_matrix()
 

@@ -29,6 +29,7 @@ class mmdpyTypeMaterial():
 
     top: int = field(default=0)
     size: int = field(default=0)
+    texture_path: str = field(default="")
     texture: Union[mmdpy_texture.mmdpyTexture, None] = field(init=False)
     color: np.ndarray = field(init=False)
     both_side_flag: bool = False
