@@ -1,12 +1,21 @@
 import numpy as np
 from typing import Any, List, Union
-from scipy.spatial.transform import Rotation
+import scipy.spatial.transform
 import math
 
 
-def normalize(v):
+def normalize(v: np.ndarray) -> np.ndarray:
     nor = np.linalg.norm(v)
     return v / (nor + 1e-32)
+
+
+def rotation_matrix_3d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    if np.array_equal(a, b):
+        return np.identity(3)
+    if np.array_equal(a, -b):
+        return -np.identity(3)
+    s = a + b
+    return 2.0 * np.outer(s, s) / np.dot(s, s) - np.identity(3)
 
 
 class mmdpyIK:
@@ -95,8 +104,18 @@ class mmdpyBone:
 
     # 方向計算
     def calc_rotate(self, next_bone) -> np.ndarray:
-        self.rotate = normalize(next_bone.get_position() - self.get_position())
+        rotmat: np.ndarray = rotation_matrix_3d(next_bone.get_position(), self.get_position())
+        self.rotate = scipy.spatial.transform.Rotation.from_matrix(rotmat).as_euler(seq="xyz")
         return self.rotate
+
+    # 子ボーンからボーンの方向を計算
+    def calc_rotate_from_child(self) -> np.ndarray:
+        self.rotate = np.zeros(3)
+        if len(self.child_bones) == 0:
+            return self.rotate
+        for c in self.child_bones:
+            self.rotate += self.calc_rotate(c)
+        return self.rotate / len(self.child_bones)
 
     # 親ボーン設定
     def set_parent_bone(self, parent):
@@ -179,15 +198,22 @@ class mmdpyBone:
 
     # quaternion
     def get_quaternion(self) -> np.ndarray:
-        rot = Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        rot = scipy.spatial.transform.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
         q = rot.as_quat()
         return q
 
     def set_quaternion(self, q: Union[List[float], np.ndarray]) -> np.ndarray:
-        rot = Rotation.from_quat(q)
+        rot = scipy.spatial.transform.Rotation.from_quat(q)
         m = rot.as_matrix()
         self.global_matrix[0:3, 0:3] = m
         return self.global_matrix
+
+    def get_rotmatrix(self) -> np.ndarray:
+        return self.global_matrix[0:3, 0:3]
+
+    def set_rotmatrix(self, m: np.ndarray) -> np.ndarray:
+        self.global_matrix[0:3, 0:3] = m
+        return m
 
     # 変化量
     # position
@@ -196,9 +222,13 @@ class mmdpyBone:
 
     # quaternion
     def get_quaternion_delta(self) -> np.ndarray:
-        rot = Rotation.from_matrix(self.delta_matrix[0:3, 0:3])
+        rot = scipy.spatial.transform.Rotation.from_matrix(self.delta_matrix[0:3, 0:3])
         q = rot.as_quat()
         return q
+
+    # matrix
+    def get_rotmatrix_delta(self) -> np.ndarray:
+        return self.delta_matrix[0:3, 0:3]
 
     # スライドさせる
     def slide(self, p: Union[List[float], np.ndarray]):

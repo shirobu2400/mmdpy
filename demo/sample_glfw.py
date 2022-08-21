@@ -128,6 +128,5 @@ def main():
     glfw.terminate()
 
 
-# Pythonのメイン関数はこんな感じで書きます
 if __name__ == "__main__":
     main()

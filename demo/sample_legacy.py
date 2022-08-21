@@ -22,7 +22,7 @@ class fpsCalculator:
         elapsed_time = (time.time() - top_time) / self.length
         if elapsed_time < 1e-8:
             return
-        print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
+        # print("{0}[FPS], {1}[time]".format(1.00 / elapsed_time, elapsed_time))
 
 
 model = None
@@ -65,6 +65,8 @@ def event(value):
 
 
 def reshape(width, height):
+    if width == 0 or height == 0:
+        return
     """callback function resize window"""
     gl.glViewport(0, 0, width, height)
     gl.glMatrixMode(gl.GL_PROJECTION)
@@ -73,6 +75,9 @@ def reshape(width, height):
 
 
 def init(width, height, model_name, motion_name):
+    if width == 0 or height == 0:
+        return
+
     """ initialize """
     gl.glClearColor(0.0, 0.0, 1.0, 1.0)
     gl.glEnable(gl.GL_DEPTH_TEST)  # enable shading

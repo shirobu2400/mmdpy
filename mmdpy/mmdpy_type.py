@@ -69,6 +69,10 @@ class mmdpyTypeBone():
 
 @dataclass
 class mmdpyTypePhysicsBody():
+    index: int = field(init=False)
+    bid: Any = field(init=False)
+    cid: Any = field(init=False)
+
     name: str = field(init=False)
     bone_id: int = field(init=False)
     group_id: int = field(init=False)
@@ -83,13 +87,13 @@ class mmdpyTypePhysicsBody():
     recoil: float = field(init=False)
     friction: float = field(init=False)
     calc: int = field(init=False)
-
     bone: Any = field(init=False)
-    body: Any = field(init=False)
 
 
 @dataclass
 class mmdpyTypePhysicsJoint():
+    cid: Any = field(init=False)
+
     name: str = field(init=False)
     rigidbody_a: int = field(init=False)
     rigidbody_b: int = field(init=False)
@@ -98,8 +102,6 @@ class mmdpyTypePhysicsJoint():
     constrain_pos: List[np.ndarray] = field(init=False)
     spring_pos: np.ndarray = field(init=False)
     spring_rot: np.ndarray = field(init=False)
-
-    joint: Any = field(init=False)
 
 
 @dataclass
