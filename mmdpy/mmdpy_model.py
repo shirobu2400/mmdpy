@@ -203,20 +203,24 @@ class mmdpyModel:
                             new_bone_id[bone_counter] = vbone_i
                             rawbone_2_newbone[vbone_i] = bone_counter
                             bone_counter += 1
-                            if bone_counter >= MMDPY_MATERIAL_USING_BONE_NUM - 1:
-                                is_bone_range = True
+                        if MMDPY_MATERIAL_USING_BONE_NUM - 3 <= bone_counter or len(new_bone_id) <= bone_counter:
+                            is_bone_range = True
+                            break
 
                         v.bone_id[i] = rawbone_2_newbone[vbone_i]
                         using_bones[vbone_i] += 1
 
-                    new_vertex.append(v)
+                    if is_bone_range:
+                        break
                     if len(new_vertex) >= self.vertex_range - self.polygon_vertex_size:
                         is_vertex_range = True
+                        break
+                    new_vertex.append(v)
                 else:
                     # 新頂点設定済み
                     new_vi = oldv_2_newv[vi]
 
-                if is_bone_range:
+                if is_bone_range or is_vertex_range:
                     # 対象の面をやり直し
                     fi -= 1
                     break

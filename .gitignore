@@ -5,6 +5,7 @@
 __pycache__
 py3.9
 .venv
+.wslvenv
 .python-version
 
 mmdpy.egg-info

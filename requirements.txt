@@ -1,6 +1,6 @@
 mypy
 scipy
-numba
+# numba
 numpy
 PyOpenGL
 PyOpenGL_accelerate

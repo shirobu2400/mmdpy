@@ -52,6 +52,8 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
             if "*" in str(m.texture_name):
                 m.texture_name = m.texture_name[:str(m.texture_name).find("*")]
             texture_path = os.path.join(pmx_data.directory, cast(str, m.texture_name))
+            if os.name == "nt":
+                texture_path = texture_path.replace('/', '\\')
 
             if texture_path not in loaded_textures.keys():
                 loaded_textures[texture_path] = mmdpy_texture.mmdpyTexture(texture_path)

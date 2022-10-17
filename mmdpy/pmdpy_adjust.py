@@ -52,6 +52,8 @@ def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
             if "*" in str(m.texture_name):
                 m.texture_name = m.texture_name[:str(m.texture_name).find("*")]
             texture_path = os.path.join(pmd_data.directory, cast(str, m.texture_name))
+            if os.name == "nt":
+                texture_path = texture_path.replace('/', '\\')
             m.texture = mmdpy_texture.mmdpyTexture(texture_path)
         m.both_side_flag = (mm.alpha < 1 - 1e-8)
         m.color = np.array(list(m.diffuse) + [m.alpha])
