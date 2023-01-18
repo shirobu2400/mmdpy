@@ -47,7 +47,7 @@ model.bone(<bone name>).get_position() -> <position 3d vector>
 <ボーン回転、移動>
 model.motion(<motion name>).reflection()
 
-# モーションの保存
+# モーションの保存(調整中)
 model.motion(<motion name>).save(<file name>)
 ```
 
