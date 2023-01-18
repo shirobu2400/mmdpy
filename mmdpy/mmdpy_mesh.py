@@ -44,8 +44,8 @@ class mmdpyMesh:
         else:
             gl.glEnable(gl.GL_CULL_FACE)
             gl.glFrontFace(gl.GL_CCW)
-            gl.glCullFace(gl.GL_FRONT)
-            # gl.glCullFace(gl.GL_BACK)
+            # gl.glCullFace(gl.GL_FRONT)
+            gl.glCullFace(gl.GL_BACK)
         gl.glEnable(gl.GL_TEXTURE_2D)
         gl.glActiveTexture(gl.GL_TEXTURE0)
         self.shader.draw(self.glsl_info)

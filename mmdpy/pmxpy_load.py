@@ -86,7 +86,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
         vertex.add_uv = []
 
         if data.add_uv_flag:
-            add_uv_size = 4
+            add_uv_size = header_byte[1]
             vertex.add_uv = cast(List[float], struct.unpack_from("{}f".format(add_uv_size), fp.read(4 * add_uv_size)))
 
         vertex.weight_calc = ord(struct.unpack_from("c", fp.read(1))[0])
@@ -206,8 +206,8 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                 "{}".format(index_sizeof_list[data.texture_index_sizeof]), fp.read(data.texture_index_sizeof))[0]
             # if material.toon_texture_number < len(data.texture_name):
             #     material.texrure_name = data.texture_name[material.toon_texture_number]
-            if material.texture_index < len(data.texture_name):
-                material.texrure_name = data.texture_name[material.texture_index]
+        if material.texture_index < len(data.texture_name):
+            material.texrure_name = data.texture_name[material.texture_index]
 
         comment_length = struct.unpack_from("i", fp.read(4))[0]
         comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
