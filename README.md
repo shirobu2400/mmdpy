@@ -1,6 +1,9 @@
-python で書かれたの mmd 表示ライブラリ<br>まだ途中。
-pmx, pmd, vmd 対応(一部、確認していないモデルがあります)<br>
+python で書かれた mmd 表示ライブラリ<br>
+MMD rendering library written in python.<br>
+まだ途中。pmx, pmd, vmd 対応(一部、確認していないモデルがあります)<br>
+Still in development, Some files are not supported.<br>
 物理演算、今後対応予定<br>
+I will plan to support physics engine. Maybe...<br>
 
 # Reference
 ```python
