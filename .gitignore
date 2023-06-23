@@ -38,5 +38,7 @@ bullet_test
 ode_test
 mmdpy_robot.urdf
 
+test
+
 # 作成途中
 demo/sample_generateing_rotate_motion.py

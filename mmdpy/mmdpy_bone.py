@@ -202,17 +202,30 @@ class mmdpyBone:
         q = rot.as_quat()
         return q
 
+    def get_quaternion_scipy(self) -> np.ndarray:
+        rot = scipy.spatial.transform.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        return rot
+
     def set_quaternion(self, q: Union[List[float], np.ndarray]) -> np.ndarray:
         rot = scipy.spatial.transform.Rotation.from_quat(q)
         m = rot.as_matrix()
         self.global_matrix[0:3, 0:3] = m
         return self.global_matrix
 
+    # rotation matrix
     def get_rotmatrix(self) -> np.ndarray:
         return self.global_matrix[0:3, 0:3]
 
     def set_rotmatrix(self, m: np.ndarray) -> np.ndarray:
         self.global_matrix[0:3, 0:3] = m
+        return m
+
+    # matrix
+    def get_matrix(self) -> np.ndarray:
+        return self.global_matrix
+
+    def set_matrix(self, m: np.ndarray) -> np.ndarray:
+        self.global_matrix = m
         return m
 
     # 変化量

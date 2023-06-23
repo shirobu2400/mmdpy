@@ -9,6 +9,7 @@ from . import mmdpy_shader
 from . import mmdpy_type
 from . import mmdpy_bone
 from . import mmdpy_physics
+# from . import mmdpy_physics_ode as mmdpy_physics
 
 
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
