@@ -1,11 +1,11 @@
 import struct
 import os
-from typing import Tuple, List, Union, cast
+from typing import cast
 from . import pmdpy_type
 
 
 # #### #### PMD Loader #### ####
-def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
+def load(filename: str) -> None | pmdpy_type.pmdpyType:
     data = pmdpy_type.pmdpyType()
 
     data.filename = filename
@@ -27,7 +27,7 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
 
     version, model_name, comment = struct.unpack_from("f20s256s", fp.read(4 + 20 + 256))
 
-    def str_to_hex(s) -> List[str]:
+    def str_to_hex(s) -> list[str]:
         return [hex(ord(i))[2:4] for i in s]
 
     def padding_erase(_string, ps) -> str:
@@ -54,10 +54,10 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
     data.vertex = []
     for _ in range(loop_size):
         vertex = pmdpy_type.pmdpyTypeLoadVertex()
-        vertex.ver = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-        vertex.nor = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-        vertex.uv = cast(Tuple[float, float], struct.unpack_from("2f", fp.read(8)))
-        vertex.bone_id = cast(Tuple[int, int], struct.unpack_from("2h", fp.read(4)))
+        vertex.ver = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.nor = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.uv = cast(tuple[float, float], struct.unpack_from("2f", fp.read(8)))
+        vertex.bone_id = cast(tuple[int, int], struct.unpack_from("2h", fp.read(4)))
         weight = cast(float, ord(struct.unpack_from("c", fp.read(1))[0]) / 100.0)
         vertex.bone_weight = (weight, 1 - weight)
         vertex.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
@@ -69,7 +69,7 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
 
     data.face = []
     for _ in range(0, loop_size, 3):
-        x = cast(Tuple[int, int, int], struct.unpack_from("3h", fp.read(6)))
+        x = cast(tuple[int, int, int], struct.unpack_from("3h", fp.read(6)))
         data.face.append(x)
 
     # #### #### Material #### ####
@@ -78,11 +78,11 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
     for _ in range(loop_size):
         material = pmdpy_type.pmdpyTypeLoadMaterial()
 
-        material.diffuse = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.diffuse = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
         material.alpha = cast(float, struct.unpack_from("f", fp.read(4))[0])
         material.specularity = struct.unpack_from("f", fp.read(4))[0]
-        material.specular_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-        material.mirror_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.specular_color = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.mirror_color = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
         material.toon_index = ord(struct.unpack_from("c", fp.read(1))[0])
         material.edge = (struct.unpack_from("c", fp.read(1))[0] != 0)
         material.face_vert_count = struct.unpack_from("i", fp.read(4))[0]
@@ -101,7 +101,7 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
         bone.tail_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
         bone.bone_type = ord(struct.unpack_from("c", fp.read(1))[0])
         bone.ik_parent_id = cast(int, struct.unpack_from("h", fp.read(2))[0])
-        bone.position = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        bone.position = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
         data.bone.append(bone)
 
@@ -137,7 +137,7 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
         for _ in range(skin.var_size):
             t = cast(int, struct.unpack_from("i", fp.read(4))[0])
             skin.var_id.append(t)
-            v = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            v = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
             skin.ver_offset.append(v)
 
         data.skin.append(skin)
@@ -216,9 +216,9 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
             group_id = ord(struct.unpack_from("c", fp.read(1))[0])
             group_mask = hex(struct.unpack_from("h", fp.read(2))[0])
             type_id = ord(struct.unpack_from("c", fp.read(1))[0])
-            sizes = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            sizes = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            pos = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            rot = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
             mass = cast(float, struct.unpack_from("f", fp.read(4))[0])
             pos_dim = cast(float, struct.unpack_from("f", fp.read(4))[0])
             rot_dim = cast(float, struct.unpack_from("f", fp.read(4))[0])
@@ -257,16 +257,16 @@ def load(filename: str) -> Union[None, pmdpy_type.pmdpyType]:
             rigidbody_a = struct.unpack_from("i", fp.read(4))[0]
             rigidbody_b = struct.unpack_from("i", fp.read(4))[0]
 
-            pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            pos = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            rot = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-            constrain_pos_1 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            constrain_pos_2 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            constrain_pos_3 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            constrain_pos_4 = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_1 = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_2 = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_3 = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            constrain_pos_4 = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
-            spring_pos = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-            spring_rot = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            spring_pos = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            spring_rot = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
             joint = pmdpy_type.pmdpyTypeLoadPhysicsJoint()
 

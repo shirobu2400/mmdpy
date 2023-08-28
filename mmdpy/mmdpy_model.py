@@ -1,7 +1,6 @@
 from __future__ import annotations
 import copy
 import numpy as np
-from typing import List, Union
 import OpenGL.GL as gl
 from . import mmdpy_root
 from . import mmdpy_mesh
@@ -9,6 +8,7 @@ from . import mmdpy_shader
 from . import mmdpy_type
 from . import mmdpy_bone
 from . import mmdpy_physics
+# from . import mmdpy_physics_ode as mmdpy_physics
 
 
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
@@ -17,7 +17,7 @@ MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 class mmdpyModel:
     def __init__(self):
         self.shader = mmdpy_shader.mmdpyShader()
-        self.meshes: List[mmdpy_mesh.mmdpyMesh] = []
+        self.meshes: list[mmdpy_mesh.mmdpyMesh] = []
 
         # Polygon vertex size
         self.polygon_vertex_size: int = 3
@@ -27,7 +27,7 @@ class mmdpyModel:
         # self.vertex_range = 256 - 256 % self.polygon_vertex_size
 
         self.name2bone = {}
-        self.physics: Union[None, mmdpy_physics.mmdpyPhysics] = None
+        self.physics: None | mmdpy_physics.mmdpyPhysics = None
 
     def draw(self) -> None:
         self.draw_option_on()
@@ -48,7 +48,7 @@ class mmdpyModel:
         gl.glDisable(gl.GL_BLEND)
 
     def create_bones(self, data: mmdpy_type.mmdpyTypeModel) -> None:
-        self.bones: List[mmdpy_bone.mmdpyBone] = [
+        self.bones: list[mmdpy_bone.mmdpyBone] = [
             mmdpy_bone.mmdpyBone(
                 bone.id, bone.name, bone.level,
                 bone.position, bone.weight,
@@ -79,7 +79,7 @@ class mmdpyModel:
                     data.bones[i].grant_translate_parent_rate
                 )
 
-        self.ikbones: List[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_ik() is not None]
+        self.ikbones: list[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_ik() is not None]
 
     def create_physics(self, physics_flag: bool, data: mmdpy_type.mmdpyTypeModel) -> None:
         # physics infomation
@@ -101,7 +101,7 @@ class mmdpyModel:
         # レベルごとのボーン更新
         def update_bone_from_level(b: mmdpy_bone.mmdpyBone) -> None:
             # IK
-            ikbone: Union[None, mmdpy_bone.mmdpyIK] = b.get_ik()
+            ikbone: None | mmdpy_bone.mmdpyIK = b.get_ik()
             if ikbone is not None:
                 target_vector = b.get_global_matrix()[3, 0: 3]
                 ikbone.effect_bone.move(target_vector, chain=ikbone.child_bones, loop_size=ikbone.iteration)
@@ -112,7 +112,7 @@ class mmdpyModel:
         # 実行レベル順に実施
         level_max = max([x.get_level() for x in self.bones])
         for level in range(level_max + 1):
-            blist: List[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_level() == level]
+            blist: list[mmdpy_bone.mmdpyBone] = [x for x in self.bones if x.get_level() == level]
             for b in blist:
                 update_bone_from_level(b)
 
@@ -144,13 +144,13 @@ class mmdpyModel:
         is_update_material: bool = False  # マテリアルの更新
         is_bone_range: bool = False       # ボーンインデックスが上限値
 
-        new_vertex: List[mmdpy_type.mmdpyTypeVertex] = []
-        new_face: List[int] = []
-        using_bones: List[int] = [1] + [0] * (len(self.bones) - 1)
-        new_bone_id: List[int] = [0] + [-1] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
-        rawbone_2_newbone: List[int] = [0] * len(data.bones)
+        new_vertex: list[mmdpy_type.mmdpyTypeVertex] = []
+        new_face: list[int] = []
+        using_bones: list[int] = [1] + [0] * (len(self.bones) - 1)
+        new_bone_id: list[int] = [0] + [-1] * (MMDPY_MATERIAL_USING_BONE_NUM - 1)
+        rawbone_2_newbone: list[int] = [0] * len(data.bones)
         bone_counter: int = 1
-        oldv_2_newv: List[int] = [-1] * int(face_length)
+        oldv_2_newv: list[int] = [-1] * int(face_length)
 
         fi = 0
         while fi < face_length:

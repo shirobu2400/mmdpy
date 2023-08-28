@@ -2,7 +2,7 @@ from . import mmdpy_root
 import OpenGL
 import OpenGL.GL as gl
 import numpy as np
-from typing import Any, Union, List, cast
+from typing import Any, cast
 from . import mmdpy_type
 MMDPY_MATERIAL_USING_BONE_NUM = mmdpy_root.MMDPY_MATERIAL_USING_BONE_NUM
 OpenGL.ERROR_ON_COPY = True
@@ -90,7 +90,7 @@ class mmdpyShader:
         glsl_info.color = material.color
         glsl_info.alpha = glsl_info.alpha
 
-    def set_bone_matrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: List[np.ndarray]) -> None:
+    def set_bone_matrix(self, glsl_info: mmdpy_type.glslInfoClass, matrix: list[np.ndarray]) -> None:
         matrices = []
         for _ in range(MMDPY_MATERIAL_USING_BONE_NUM):
             matrices.append(matrix)
@@ -98,7 +98,7 @@ class mmdpyShader:
         glsl_info.matrices = np.array(matrices, dtype=(np.float32))
 
     def set_projection_matrix(self,
-                              matrix: Union[None, np.ndarray] = None,
+                              matrix: None | np.ndarray = None,
                               left: float = -0.5, right: float = 0.5,
                               top: float = -0.5, bottom: float = 0.5,
                               near: float = 1.0, far: float = 160.0):

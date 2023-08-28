@@ -4,11 +4,11 @@ import os
 from . import mmdpy_texture
 from . import mmdpy_type
 from . import pmxpy_type
-from typing import Any, cast, Union, Dict
+from typing import Any, cast
 
 
 # #### #### PMD Adjuster #### ####
-def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeModel]:
+def adjust(pmx_data: pmxpy_type.pmxpyType) -> None | mmdpy_type.mmdpyTypeModel:
 
     adjust_data = mmdpy_type.mmdpyTypeModel()
 
@@ -45,7 +45,7 @@ def adjust(pmx_data: pmxpy_type.pmxpyType) -> Union[None, mmdpy_type.mmdpyTypeMo
         m.size = m.face_vert_count
         m_top += m.size
 
-        loaded_textures: Dict[str, mmdpy_texture.mmdpyTexture] = {}
+        loaded_textures: dict[str, mmdpy_texture.mmdpyTexture] = {}
         m.texture = None
         m.texture_name = mm.texrure_name
         if len(m.texture_name) > 0:

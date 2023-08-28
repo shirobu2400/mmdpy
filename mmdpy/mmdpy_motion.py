@@ -1,6 +1,6 @@
 from __future__ import annotations
 import numpy as np
-from typing import Union, Dict, List, Any
+from typing import Any
 from . import mmdpy_bone
 
 
@@ -8,20 +8,20 @@ class mmdpyMotionFrame:
     def __init__(self, bone: mmdpy_bone.mmdpyBone, frame: int):
         self.bone: mmdpy_bone.mmdpyBone = bone
         self.frame: int = frame
-        self.qs: Union[None, np.ndarray] = None
-        self.pos: Union[None, np.ndarray] = None
-        self.next: Union[None, mmdpyMotionFrame] = None
+        self.qs: None | np.ndarray = None
+        self.pos: None | np.ndarray = None
+        self.next: None | mmdpyMotionFrame = None
 
     def get_frame(self) -> int:
         return self.frame
 
-    def get_position(self) -> Union[None, np.ndarray]:
+    def get_position(self) -> None | np.ndarray:
         return self.pos
 
-    def get_quaternion(self) -> Union[None, np.ndarray]:
+    def get_quaternion(self) -> None | np.ndarray:
         return self.qs
 
-    def set_next_motion(self, motion: Union[None, mmdpyMotionFrame]) -> None:
+    def set_next_motion(self, motion: None | mmdpyMotionFrame) -> None:
         self.next = motion
 
     def set_quaternion(self, qs: np.ndarray) -> None:
@@ -62,7 +62,7 @@ class mmdpyMotionFrame:
 
         return matrix
 
-    def update(self, frame: int) -> Union[mmdpyMotionFrame, None]:
+    def update(self, frame: int) -> mmdpyMotionFrame | None:
         # self.bone.add_matrix(np.identity(4), overwrite=True)
 
         if self.next is None and self.qs is not None:
@@ -143,10 +143,10 @@ class mmdpyMotionFrame:
 class mmdpyMotion:
     def __init__(self, model: Any, motion: Any):
         self.model = model
-        self.motions: Dict[str, List[Union[None, mmdpyMotionFrame]]] = {}
-        self.bone_frame: Dict[str, Any] = {}
-        self.now_frame: Dict[str, Any] = {}
-        motion_frame: Dict[str, Any] = {}
+        self.motions: dict[str, list[None | mmdpyMotionFrame]] = {}
+        self.bone_frame: dict[str, Any] = {}
+        self.now_frame: dict[str, Any] = {}
+        motion_frame: dict[str, Any] = {}
         for b in self.model.bones:
             self.motions[b.name] = []
             motion_frame[b.name] = []
@@ -195,7 +195,7 @@ class mmdpyMotion:
                       position: np.ndarray,
                       quaternion: np.ndarray) -> mmdpyMotionFrame:
 
-        motions: List[Union[None, mmdpyMotionFrame]] = self.motions[bonename]
+        motions: list[None | mmdpyMotionFrame] = self.motions[bonename]
         change_flag: bool = False  # 既存のフレームを更新する場合 True <= 変更要望フレームが既に存在する
         target_index: int = 0
         for i, motion_temp in enumerate(motions):
@@ -214,7 +214,7 @@ class mmdpyMotion:
         if change_flag:
             self.motions[bonename][target_index] = new_motion
         else:
-            after_motion: List[Union[None, mmdpyMotionFrame]] = self.motions[bonename][target_index:]
+            after_motion: list[None | mmdpyMotionFrame] = self.motions[bonename][target_index:]
             if len(after_motion) == 0:
                 after_motion = [None]
             self.motions[bonename] = \

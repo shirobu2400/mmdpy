@@ -1,7 +1,7 @@
 import numpy as np
 from . import mmdpy_texture
 from dataclasses import dataclass, field
-from typing import Any, Union, List
+from typing import Any
 
 
 # model info
@@ -25,12 +25,12 @@ class mmdpyTypeMaterial():
     toon_index: int = field(init=False)
     edge_size: float = field(init=False)
     face_vert_count: int = field(init=False)
-    texture_name: Union[str, bytes] = field(init=False)
+    texture_name: str | bytes = field(init=False)
 
     top: int = field(default=0)
     size: int = field(default=0)
     texture_path: str = field(default="")
-    texture: Union[mmdpy_texture.mmdpyTexture, None] = field(init=False)
+    texture: mmdpy_texture.mmdpyTexture | None = field(init=False)
     color: np.ndarray = field(init=False)
     both_side_flag: bool = False
 
@@ -42,7 +42,7 @@ class mmdpyTypeIK():
     length: int = field(init=False)
     iteration: int = field(init=False)
     weight: np.ndarray = field(init=False)
-    child_bones_index: List[int] = field(init=False)
+    child_bones_index: list[int] = field(init=False)
 
 
 @dataclass
@@ -57,7 +57,7 @@ class mmdpyTypeBone():
     parent_id: int = field(init=False)
     tail_id: int = field(init=False)
     ik_parent_id: int = field(init=False)
-    ik: Union[None, mmdpyTypeIK] = field(default=None)
+    ik: None | mmdpyTypeIK = field(default=None)
     rotatable_control: Any = field(init=False)
 
     level: int = field(default=0)  # 実行順の階層
@@ -99,15 +99,15 @@ class mmdpyTypePhysicsJoint():
     rigidbody_b: int = field(init=False)
     pos: np.ndarray = field(init=False)
     rot: np.ndarray = field(init=False)
-    constrain_pos: List[np.ndarray] = field(init=False)
+    constrain_pos: list[np.ndarray] = field(init=False)
     spring_pos: np.ndarray = field(init=False)
     spring_rot: np.ndarray = field(init=False)
 
 
 @dataclass
 class mmdpyTypePhysics():
-    body: List[mmdpyTypePhysicsBody] = field(init=False)
-    joint: List[mmdpyTypePhysicsJoint] = field(init=False)
+    body: list[mmdpyTypePhysicsBody] = field(init=False)
+    joint: list[mmdpyTypePhysicsJoint] = field(init=False)
 
 
 @dataclass
@@ -127,9 +127,9 @@ class glslInfoClass():
 class mmdpyTypeModel:
     def __init__(self):
         # Adjusted struct
-        self.vertices: List[mmdpyTypeVertex] = []
-        self.faces: List[List[int]] = []
-        self.materials: List[mmdpyTypeMaterial] = []
-        self.bones: List[mmdpyTypeBone] = []
+        self.vertices: list[mmdpyTypeVertex] = []
+        self.faces: list[list[int]] = []
+        self.materials: list[mmdpyTypeMaterial] = []
+        self.bones: list[mmdpyTypeBone] = []
         self.physics_flag: bool = False
-        self.physics: Union[None, mmdpyTypePhysics] = None
+        self.physics: None | mmdpyTypePhysics = None
