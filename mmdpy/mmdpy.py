@@ -11,7 +11,7 @@ from . import mmdpy_model
 from . import mmdpy_motion
 from . import vmd
 import numpy as np
-from typing import Any, Dict, Union, cast
+from typing import Any, cast
 
 
 class motion:
@@ -22,7 +22,7 @@ class motion:
         self.motion_data: vmd.mmdpyVmd = vmd.mmdpyVmd()
         self.model: mmdpy_model.mmdpyModel = model
         self.frame: int = 0
-        self.motion: Union[None, mmdpy_motion.mmdpyMotion] = mmdpy_motion.mmdpyMotion(self.model, None)
+        self.motion: None | mmdpy_motion.mmdpyMotion = mmdpy_motion.mmdpyMotion(self.model, None)
 
     def load(self, filename: str) -> bool:
         """モーションの読み込み
@@ -102,12 +102,12 @@ class model:
     Attributes:
         runnable (bool): 実行可能状態であるか判定する
         model (mmdpy_model.mmdpyModel): モデル情報
-        motion_data (Dict[str, motion]): 名前を付けたモーション
+        motion_data (dict[str, motion]): 名前を付けたモーション
     """
     def __init__(self, filename: str = ""):
         self.runnable: bool = False
         self.model: mmdpy_model.mmdpyModel = mmdpy_model.mmdpyModel()
-        self.motion_data: Dict[str, motion] = {}
+        self.motion_data: dict[str, motion] = {}
         if filename != "":
             if not self.load(filename):
                 raise FileNotFoundError
@@ -140,7 +140,7 @@ class model:
             return False
         self.model.set_model(self.data)
         self.model.update_bone()
-        self.model.create_physics(self.data.physics_flag, self.data)
+        # self.model.create_physics(self.data.physics_flag, self.data)
 
         self.runnable = True
         return True
@@ -186,7 +186,7 @@ class model:
         return self.motion_data[name]
 
     # ボーンを取得
-    def bone(self, p: Union[int, str]) -> mmdpy_bone.mmdpyBone:
+    def bone(self, p: int | str) -> mmdpy_bone.mmdpyBone:
         """ボーンクラスを取得する
 
         Args:

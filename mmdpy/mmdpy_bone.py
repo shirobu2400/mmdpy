@@ -1,6 +1,6 @@
 import numpy as np
-from typing import Any, List, Union
-import scipy.spatial.transform
+from typing import Any
+import scipy.spatial.transform.rotation as scipyrot
 import math
 
 
@@ -19,11 +19,11 @@ def rotation_matrix_3d(a: np.ndarray, b: np.ndarray) -> np.ndarray:
 
 
 class mmdpyIK:
-    def __init__(self, bone: Any, next_bone: Any, iteration: int, child_bones: List):
+    def __init__(self, bone: Any, next_bone: Any, iteration: int, child_bones: list[Any]):
         self.bone: Any = bone
         self.effect_bone: Any = next_bone
         self.iteration: int = iteration
-        self.child_bones: List[Any] = child_bones
+        self.child_bones: list[Any] = child_bones
 
 
 class mmdpyBone:
@@ -60,8 +60,8 @@ class mmdpyBone:
         # Offset をかけることで global matrix になる行列
         self.global_matrix: np.ndarray = self.top_matrix
 
-        self.parent: Union[None, mmdpyBone] = None
-        self.child_bones: List[mmdpyBone] = []
+        self.parent: None | mmdpyBone = None
+        self.child_bones: list[mmdpyBone] = []
 
         self.rotatable_control = rotatable_control
 
@@ -69,7 +69,7 @@ class mmdpyBone:
 
         # 読み込みデータ保存
         self.data: Any = None
-        self.ik: Union[None, mmdpyIK] = None
+        self.ik: None | mmdpyIK = None
 
         self.grant_rotation_parent_bone: Any = None
         self.grant_rotation_parent_rate: float = 0
@@ -99,13 +99,13 @@ class mmdpyBone:
     def set_ik(self, ik: mmdpyIK):
         self.ik = ik
 
-    def get_ik(self) -> Union[None, mmdpyIK]:
+    def get_ik(self) -> None | mmdpyIK:
         return self.ik
 
     # 方向計算
     def calc_rotate(self, next_bone) -> np.ndarray:
         rotmat: np.ndarray = rotation_matrix_3d(next_bone.get_position(), self.get_position())
-        self.rotate = scipy.spatial.transform.Rotation.from_matrix(rotmat).as_euler(seq="xyz")
+        self.rotate = scipyrot.Rotation.from_matrix(rotmat).as_euler(seq="xyz")
         return self.rotate
 
     # 子ボーンからボーンの方向を計算
@@ -192,22 +192,34 @@ class mmdpyBone:
     def get_position(self) -> np.ndarray:
         return self.global_matrix[3, 0: 3]
 
-    def set_position(self, p: Union[List[float], np.ndarray]) -> Union[List[float], np.ndarray]:
+    def set_position(self, p: list[float] | np.ndarray) -> list[float] | np.ndarray:
         self.global_matrix[3, 0: 3] = p
         return p
 
+    # euler
+    def get_euler(self, option: str) -> np.ndarray:
+        rot = scipyrot.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        q = rot.as_euler(option)
+        return q
+
+    def set_euler(self, e: list[float] | np.ndarray, option: str) -> np.ndarray:
+        rot = scipyrot.Rotation.from_euler(option, e)
+        m = rot.as_matrix()
+        self.global_matrix[0:3, 0:3] = m
+        return self.global_matrix
+
     # quaternion
     def get_quaternion(self) -> np.ndarray:
-        rot = scipy.spatial.transform.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        rot = scipyrot.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
         q = rot.as_quat()
         return q
 
     def get_quaternion_scipy(self) -> np.ndarray:
-        rot = scipy.spatial.transform.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
+        rot = scipyrot.Rotation.from_matrix(self.global_matrix[0:3, 0:3])
         return rot
 
-    def set_quaternion(self, q: Union[List[float], np.ndarray]) -> np.ndarray:
-        rot = scipy.spatial.transform.Rotation.from_quat(q)
+    def set_quaternion(self, q: list[float] | np.ndarray) -> np.ndarray:
+        rot = scipyrot.Rotation.from_quat(q)
         m = rot.as_matrix()
         self.global_matrix[0:3, 0:3] = m
         return self.global_matrix
@@ -235,7 +247,7 @@ class mmdpyBone:
 
     # quaternion
     def get_quaternion_delta(self) -> np.ndarray:
-        rot = scipy.spatial.transform.Rotation.from_matrix(self.delta_matrix[0:3, 0:3])
+        rot = scipyrot.Rotation.from_matrix(self.delta_matrix[0:3, 0:3])
         q = rot.as_quat()
         return q
 
@@ -244,7 +256,7 @@ class mmdpyBone:
         return self.delta_matrix[0:3, 0:3]
 
     # スライドさせる
-    def slide(self, p: Union[List[float], np.ndarray]):
+    def slide(self, p: list[float] | np.ndarray):
         matrix = np.identity(4)
         matrix[3, 0] = p[0]
         matrix[3, 1] = p[1]
@@ -252,8 +264,8 @@ class mmdpyBone:
         return self.add_matrix(matrix)
 
     # ik 付き
-    def move(self, target_position: Union[List[float], np.ndarray],
-             chain: Union[None, List[Any]] = None,
+    def move(self, target_position: list[float] | np.ndarray,
+             chain: None | list[Any] = None,
              loop_size: int = 1, depth: int = 0, loop_range: int = 255):
         bias = 1e-2
         if loop_size > loop_range:

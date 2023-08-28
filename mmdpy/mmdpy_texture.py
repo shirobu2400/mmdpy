@@ -1,12 +1,12 @@
 import OpenGL.GL as gl
 from PIL import Image
 import numpy as np
-from typing import Union, Any
+from typing import Any
 import os
 
 
 class mmdpyTexture:
-    def __init__(self, filename: Union[str, None] = None):
+    def __init__(self, filename: str | None = None):
         self.glsl_texture = None
         if filename is not None:
             self.load(filename)
@@ -20,7 +20,7 @@ class mmdpyTexture:
         gl.glTexGeni(gl.GL_S, gl.GL_TEXTURE_GEN_MODE, gl.GL_SPHERE_MAP)
         gl.glTexGeni(gl.GL_T, gl.GL_TEXTURE_GEN_MODE, gl.GL_SPHERE_MAP)
 
-    def load(self, filename: str) -> Union[int, None]:
+    def load(self, filename: str) -> int | None:
         if not os.path.isfile(filename):
             return None
 
@@ -31,7 +31,7 @@ class mmdpyTexture:
         image_array = np.asarray(image).reshape(image.size[1], image.size[0], -1)
         return self.load_from_image(image_array, image_channel=image_channel)
 
-    def load_from_image(self, image: np.ndarray, image_channel: Any = gl.GL_RGBA) -> Union[int, None]:
+    def load_from_image(self, image: np.ndarray, image_channel: Any = gl.GL_RGBA) -> int | None:
         if image is None:
             return None
         self.glsl_texture = gl.glGenTextures(1)

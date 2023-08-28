@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.spatial.transform
+import scipy.spatial.transform.rotation as scipyrot
 import pybullet
 from . import mmdpy_type
 from . import mmdpy_bone
@@ -20,13 +20,10 @@ class mmdpyPhysics:
         self.b2gl_p_scale: float = 0.50
         self.gl2b_p_scale: float = 1.00 / self.b2gl_p_scale
 
-        self.b2gl_rot = scipy.spatial.transform.Rotation.from_rotvec([-np.pi / 2, 0, 0])
-        self.gl2b_rot = scipy.spatial.transform.Rotation.from_rotvec([+np.pi / 2, 0, 0])
-
         # 世界生成
         if debug_print:
             # debug mode.
-            self.physics_engine = pybullet.connect(pybullet.GUI)
+            self.physics_engine = pybullet.connect(pybullet.GUI, options="--opengl2")
             # pybullet.resetDebugVisualizerCamera(cameraDistance=35, cameraYaw=0, cameraPitch=0, cameraTargetPosition=[0, 0, 20])
             pybullet.resetDebugVisualizerCamera(cameraDistance=15, cameraYaw=180, cameraPitch=89, cameraTargetPosition=[0, 20, -10])
             # pybullet.setGravity(0, 0, 9.81, physicsClientId=self.physics_engine)
@@ -42,10 +39,9 @@ class mmdpyPhysics:
 
         for body in self.bodies:
             body.bone = self.bones[body.bone_id]
-
             cid = None
 
-            rot: scipy.spatial.transform.Rotation = scipy.spatial.transform.Rotation.from_rotvec(body.rot)
+            rot: scipyrot.Rotation = scipyrot.Rotation.from_rotvec(body.rot)
             if body.type_id == 0:  # 球
                 cid = pybullet.createCollisionShape(pybullet.GEOM_SPHERE,
                                                     radius=body.sizes[0],
@@ -55,16 +51,10 @@ class mmdpyPhysics:
                                                     halfExtents=body.sizes * self.b2gl_p_scale,
                                                     physicsClientId=self.physics_engine)
             elif body.type_id == 2:  # カプセル
-                # rot = rot * self.gl2b_rot
-                # quat: np.ndarray = rot.as_quat()
                 cid = pybullet.createCollisionShape(pybullet.GEOM_CAPSULE,
-                                                    radius=body.sizes[0], height=body.sizes[1] / 2,
+                                                    radius=body.sizes[0], height=body.sizes[1],
                                                     # collisionFrameOrientation=quat,
                                                     physicsClientId=self.physics_engine)
-                # rot = rot * self.gl2b_rot
-                # cid = pybullet.createCollisionShape(pybullet.GEOM_BOX,
-                #                                     halfExtents=[body.sizes[0], body.sizes[1] / 2, body.sizes[0]],
-                #                                     physicsClientId=self.physics_engine)
             else:
                 cid = pybullet.createCollisionShape(pybullet.GEOM_SPHERE,
                                                     radius=body.sizes[0],
@@ -73,7 +63,6 @@ class mmdpyPhysics:
             # モデルから反映するボーンは重さ０とする
             if body.calc == 0:
                 body.mass = 0
-
             bid = pybullet.createMultiBody(body.mass,
                                            cid,
                                            -1,
@@ -96,33 +85,36 @@ class mmdpyPhysics:
         self._set_origin_bones(self.origin_bodies)
         self._set_origin_bones(self.update_bodies)
 
-        max_force: float = 1e+9
+        max_force: float = 1e+5
 
         # joint
         for joint in self.joints:
             body_a = self.bodies[joint.rigidbody_a]
             body_b = self.bodies[joint.rigidbody_b]
-
             if body_a.bid is None or body_b.bid is None:
                 continue
 
-            rot_a: scipy.spatial.transform.Rotation = scipy.spatial.transform.Rotation.from_rotvec(body_a.rot)
-            rot_b: scipy.spatial.transform.Rotation = scipy.spatial.transform.Rotation.from_rotvec(body_b.rot)
-            rot_a = rot_a * self.gl2b_rot
-            rot_b = rot_b * self.gl2b_rot
+            rot_a = scipyrot.Rotation.from_rotvec(body_a.rot)
+            rot_b = scipyrot.Rotation.from_rotvec(body_b.rot)
+            # rot_a = rot_a * self.gl2b_rot
+            # rot_b = rot_b * self.gl2b_rot
 
-            cpos = np.subtract(body_a.pos, body_b.pos)
+            # cpos = np.subtract(body_a.pos, body_b.pos)
+            parent_pos = np.matmul(body_a.bone.offset_matrix, np.concatenate([joint.pos, [1]], axis=0))
+            child_pos = np.matmul(body_b.bone.offset_matrix, np.concatenate([joint.pos, [1]], axis=0))
 
             cid = pybullet.createConstraint(
                 parentBodyUniqueId=body_a.bid,
                 parentLinkIndex=-1,
                 childBodyUniqueId=body_b.bid,
                 childLinkIndex=-1,
-                jointType=pybullet.JOINT_POINT2POINT,
-                # jointType=pybullet.JOINT_FIXED,
+                # jointType=pybullet.JOINT_POINT2POINT,
+                jointType=pybullet.JOINT_FIXED,
                 jointAxis=joint.rot,
-                parentFramePosition=[0, 0, 0],
-                childFramePosition=cpos,
+                parentFramePosition=parent_pos,
+                childFramePosition=child_pos,
+                # parentFramePosition=[0, 0, 0],
+                # childFramePosition=cpos,
                 parentFrameOrientation=rot_a,
                 childFrameOrientation=rot_b
             )
@@ -132,21 +124,21 @@ class mmdpyPhysics:
 
         self._update_bones(self.update_bodies)
 
-        # # リアルタイム
-        # pybullet.setRealTimeSimulation(1)
+        # リアルタイム
+        pybullet.setRealTimeSimulation(1)
 
         self._set_origin_bones(self.origin_bodies)
 
     def _set_origin_bones(self, bones: list[mmdpy_type.mmdpyTypePhysicsBody]) -> None:
         for body in bones:
-            # 行列の物理演算への反映
-            # p: np.ndarray = body.bone.get_position_delta() + body.pos
-            # p: np.ndarray = self.gl2b_p_scale * np.array(body.bone.get_position())
+            # # 行列の物理演算への反映
+            # # p: np.ndarray = body.bone.get_position_delta() + body.pos
+            # # p: np.ndarray = self.gl2b_p_scale * np.array(body.bone.get_position())
             # p: np.ndarray = body.bone.get_position() + body.pos - body.bone.top_matrix[3, 0: 3]
 
-            # q: scipy.spatial.transform.Rotation \
-            #     = scipy.spatial.transform.Rotation.from_matrix(body.bone.delta_matrix[0:3, 0:3])
-            # rot: scipy.spatial.transform.Rotation = scipy.spatial.transform.Rotation.from_rotvec(body.rot)
+            # q: scipyrot.Rotation \
+            #     = scipyrot.Rotation.from_matrix(body.bone.delta_matrix[0:3, 0:3])
+            # rot: scipyrot.Rotation = scipyrot.Rotation.from_rotvec(body.rot)
             # rot = rot * self.gl2b_rot
             # q = q * rot
 
@@ -154,8 +146,8 @@ class mmdpyPhysics:
             #                                          np.array(p), q.as_quat(),
             #                                          physicsClientId=self.physics_engine)
 
-            p: np.ndarray = body.bone.get_position()
-            q: np.ndarray = (body.bone.get_quaternion_scipy() * self.gl2b_rot).as_quat()
+            p = body.bone.get_position()
+            q = body.bone.get_quaternion()
             pybullet.resetBasePositionAndOrientation(body.bid,
                                                      p, q,
                                                      physicsClientId=self.physics_engine)
@@ -164,27 +156,17 @@ class mmdpyPhysics:
         for body in bones:
             # 行列の表示ボーンへの反映
             p, q = pybullet.getBasePositionAndOrientation(body.bid, physicsClientId=self.physics_engine)
-
-            r: scipy.spatial.transform.Rotation = scipy.spatial.transform.Rotation.from_quat(q)
-            r = r * self.b2gl_rot
-            q = r.as_quat().tolist()
-
-            body.bone.set_position(np.array(p))
+            body.bone.set_position(p)
             body.bone.set_quaternion(q)
-
             body.bone.local_matrix = np.matmul(body.bone.offset_matrix, body.bone.global_matrix)
 
     def run(self) -> None:
-        pybullet.setRealTimeSimulation(0)
-
         self._set_origin_bones(self.origin_bodies)
 
         # # run simulation
         # pybullet.stepSimulation(self.physics_engine)
 
         self._update_bones(self.update_bodies)
-
-        pybullet.setRealTimeSimulation(1)
 
     # def createURDF(
     #     self,

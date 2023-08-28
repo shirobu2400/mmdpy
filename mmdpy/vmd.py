@@ -1,7 +1,7 @@
 from __future__ import annotations
 import struct
 import os
-from typing import List, Tuple, Any
+from typing import Any
 from dataclasses import dataclass, field
 import numpy as np
 
@@ -11,15 +11,15 @@ class mmdpyVmdMotion:
     """"Motion dataclass"""
     bonename: str = field(default="")
     frame: int = field(default=0)
-    vector: Tuple[Any, ...] = field(default=(0, 0, 0))
-    quaternion: Tuple[Any, ...] = field(default=(0, 0, 0, 0))
-    interpolation: Tuple[Any, ...] = field(default=(0, 0, 0, 0))
+    vector: tuple[Any, ...] = field(default=(0, 0, 0))
+    quaternion: tuple[Any, ...] = field(default=(0, 0, 0, 0))
+    interpolation: tuple[Any, ...] = field(default=(0, 0, 0, 0))
 
 
 class mmdpyVmd:
     def __init__(self, filename: str = ""):
         """"MMDPY Motion Class"""
-        self.motions: List[mmdpyVmdMotion] = []
+        self.motions: list[mmdpyVmdMotion] = []
         self.frame_id = 0
 
         if filename != "":
@@ -27,7 +27,7 @@ class mmdpyVmd:
                 raise IOError
 
     @staticmethod
-    def str_to_hex(s: str) -> List[str]:
+    def str_to_hex(s: str) -> list[str]:
         return [hex(ord(i))[2:4] for i in s]
 
     def padding_erase(self, _string: str, ps: str) -> str:

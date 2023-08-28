@@ -1,12 +1,12 @@
 import struct
 import os
-from typing import Tuple, List, Union, cast
+from typing import cast
 from . import pmxpy_type
 import numpy as np
 
 
 # #### #### PMX Loader #### ####
-def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
+def load(filename: str) -> None | pmxpy_type.pmxpyType:
     data = pmxpy_type.pmxpyType()
 
     data.filename = filename
@@ -80,14 +80,14 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
     data.vertex = []
     for _ in range(loop_size):
         vertex = pmxpy_type.pmxpyTypeLoadVertex()
-        vertex.ver = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-        vertex.nor = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-        vertex.uv = cast(Tuple[float, float], struct.unpack_from("2f", fp.read(8)))
+        vertex.ver = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.nor = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        vertex.uv = cast(tuple[float, float], struct.unpack_from("2f", fp.read(8)))
         vertex.add_uv = []
 
         if data.add_uv_flag:
             add_uv_size = header_byte[1]
-            vertex.add_uv = cast(List[float], struct.unpack_from("{}f".format(add_uv_size), fp.read(4 * add_uv_size)))
+            vertex.add_uv = cast(list[float], struct.unpack_from("{}f".format(add_uv_size), fp.read(4 * add_uv_size)))
 
         vertex.weight_calc = ord(struct.unpack_from("c", fp.read(1))[0])
         vertex.bone_id = [0, 0, 0, 0]
@@ -106,7 +106,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
             # n : ボーンIndexサイズ  | ボーン1の参照Index
             # n : ボーンIndexサイズ  | ボーン2の参照Index
             # 4 : float             | ボーン1のウェイト値(0～1.0), ボーン2のウェイト値は 1.0-ボーン1ウェイト
-            vertex.bone_id[0: 2] = cast(List[int],
+            vertex.bone_id[0: 2] = cast(list[int],
                                         struct.unpack_from(
                                             "2{}".format(index_sizeof_list[data.bone_index_sizeof]),
                                             fp.read(2 * data.bone_index_sizeof)))
@@ -123,11 +123,11 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
             # 4 : float              | ボーン2のウェイト値
             # 4 : float              | ボーン3のウェイト値
             # 4 : float              | ボーン4のウェイト値 (ウェイト計1.0の保障はない)
-            vertex.bone_id = cast(List[int],
+            vertex.bone_id = cast(list[int],
                                   struct.unpack_from(
                                       "4{}".format(index_sizeof_list[data.bone_index_sizeof]),
                                       fp.read(4 * data.bone_index_sizeof)))
-            vertex.bone_weight = cast(List[float], struct.unpack_from("4f", fp.read(16)))
+            vertex.bone_weight = cast(list[float], struct.unpack_from("4f", fp.read(16)))
 
         # SDEF
         if vertex.weight_calc == 3:
@@ -137,13 +137,13 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
             # 12 : float3             | SDEF-C値(x,y,z)
             # 12 : float3             | SDEF-R0値(x,y,z)
             # 12 : float3             | SDEF-R1値(x,y,z) ※修正値を要計算
-            vertex.bone_id[0: 2] = cast(List[int],
+            vertex.bone_id[0: 2] = cast(list[int],
                                         struct.unpack_from(
                                             "2{}".format(index_sizeof_list[data.bone_index_sizeof]),
                                             fp.read(2 * data.bone_index_sizeof)))
             vertex.bone_weight[0] = struct.unpack_from("f", fp.read(4))[0]
             vertex.bone_weight[1] = 1 - vertex.bone_weight[0]
-            vertex.sdef_options = cast(List[float], struct.unpack_from("9f", fp.read(36)))
+            vertex.sdef_options = cast(list[float], struct.unpack_from("9f", fp.read(36)))
 
         vertex.edge = struct.unpack_from("f", fp.read(4))[0]
 
@@ -153,7 +153,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
     loop_size = struct.unpack_from("i", fp.read(4))[0]
     data.face = []
     for _ in range(0, loop_size, 3):
-        x = cast(Tuple[int, int, int],
+        x = cast(tuple[int, int, int],
                  struct.unpack_from("3{}".format(index_sizeof_list[data.face_index_sizeof]),
                                     fp.read(3 * data.face_index_sizeof)))
         data.face.append(x)
@@ -180,13 +180,13 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
         comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
         material.name_eng = comment_bytes.decode(data.encode_type)
 
-        material.diffuse = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
-        material.specular_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.diffuse = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+        material.specular_color = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
         material.specular_scale = struct.unpack_from("f", fp.read(4))[0]
-        material.ambient_color = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        material.ambient_color = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
         material.bit_flag = struct.unpack_from("b", fp.read(1))[0]
-        material.edge_color = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+        material.edge_color = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
         material.edge_size = struct.unpack_from("f", fp.read(4))[0]
 
         material.texture_index = cast(int, struct.unpack_from(
@@ -231,7 +231,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
         comment_bytes = bytes(struct.unpack_from("{}s".format(comment_length), fp.read(comment_length))[0])
         bone.name_eng = comment_bytes.decode(data.encode_type)
 
-        bone.position = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+        bone.position = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
         bone.parent_id = cast(int, struct.unpack_from(
             "{}".format(index_sizeof_list[data.bone_index_sizeof]), fp.read(data.bone_index_sizeof))[0])
         bone.level = struct.unpack_from("i", fp.read(4))[0]
@@ -244,7 +244,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                 "{}".format(index_sizeof_list[data.bone_index_sizeof]), fp.read(data.bone_index_sizeof))[0])
         else:
             bone.child_flag = False
-            bone.offset_position = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+            bone.offset_position = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
 
         # 回転可能
         bone.rotation_flag = ((bone.bone_flag & 0x0002) != 0x0000)
@@ -317,8 +317,8 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                                         fp.read(data.bone_index_sizeof))[0])
                 link.rotate_limit_flag = (struct.unpack_from("b", fp.read(1))[0] != 0)
                 if link.rotate_limit_flag:
-                    link.btm = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-                    link.top = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                    link.btm = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                    link.top = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
                 ik.child_bone_id.append(link)
             bone.ik = ik
 
@@ -350,7 +350,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                 v.vertex_id = cast(int, struct.unpack_from(
                     "{}".format(index_sizeof_list[data.face_index_sizeof]),
                     fp.read(data.face_index_sizeof))[0])
-                v.vertex = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                v.vertex = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
                 morph.vertex.append(v)
         if morph.type == 4:
             uv_number = 0
@@ -368,7 +368,7 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                 u.uv_id = cast(int, struct.unpack_from(
                     "{}".format(index_sizeof_list[data.face_index_sizeof]),
                     fp.read(data.face_index_sizeof))[0])
-                u.uv = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                u.uv = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
                 morph.uv.append(u)
         if morph.type == 2:
             morph.bone = []
@@ -377,8 +377,8 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                 b.bone_id = cast(int, struct.unpack_from(
                     "{}".format(index_sizeof_list[data.bone_index_sizeof]),
                     fp.read(data.bone_index_sizeof))[0])
-                b.translate = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-                b.rotation = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                b.translate = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                b.rotation = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
                 morph.bone.append(b)
         if morph.type == 8:
             morph.material = []
@@ -389,15 +389,15 @@ def load(filename: str) -> Union[None, pmxpy_type.pmxpyType]:
                     fp.read(data.material_index_sizeof))[0])
                 m.calc_format = ord(struct.unpack_from("c", fp.read(1))[0])
 
-                m.diffuse = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
-                m.specular = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                m.diffuse = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.specular = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
                 m.specular_alpha = cast(float, struct.unpack_from("f", fp.read(4)))
-                m.ambient = cast(Tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
-                m.edge_color = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.ambient = cast(tuple[float, float, float], struct.unpack_from("3f", fp.read(12)))
+                m.edge_color = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
                 m.edge_size = cast(float, struct.unpack_from("f", fp.read(4)))
-                m.texture_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
-                m.sphere_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
-                m.toon_texture_alpha = cast(Tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.texture_alpha = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.sphere_alpha = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
+                m.toon_texture_alpha = cast(tuple[float, float, float, float], struct.unpack_from("4f", fp.read(16)))
 
                 morph.material.append(m)
         if morph.type == 0:

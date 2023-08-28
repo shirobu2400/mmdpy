@@ -1,24 +1,24 @@
-from typing import Union, Any, List, Tuple, Dict
+from typing import Any
 from dataclasses import dataclass, field
 
 
 @dataclass
 class pmdpyTypeLoadVertex():
-    ver: Tuple[float, float, float] = field(init=False)
-    nor: Tuple[float, float, float] = field(init=False)
-    uv: Tuple[float, float] = field(init=False)
-    bone_id: Tuple[int, int] = field(init=False)
-    bone_weight: Tuple[float, float] = field(init=False)
+    ver: tuple[float, float, float] = field(init=False)
+    nor: tuple[float, float, float] = field(init=False)
+    uv: tuple[float, float] = field(init=False)
+    bone_id: tuple[int, int] = field(init=False)
+    bone_weight: tuple[float, float] = field(init=False)
     edge: int = field(init=False)
 
 
 @dataclass
 class pmdpyTypeLoadMaterial():
-    diffuse: Tuple[float, float, float] = field(init=False)
+    diffuse: tuple[float, float, float] = field(init=False)
     alpha: float = field(init=False)
-    specularity: Tuple[float, float, float] = field(init=False)
-    specular_color: Tuple[float, float, float] = field(init=False)
-    mirror_color: Tuple[float, float, float] = field(init=False)
+    specularity: tuple[float, float, float] = field(init=False)
+    specular_color: tuple[float, float, float] = field(init=False)
+    mirror_color: tuple[float, float, float] = field(init=False)
     toon_index: int = field(init=False)
     edge: bool = field(init=False)
     face_vert_count: int = field(init=False)
@@ -32,7 +32,7 @@ class pmdpyTypeLoadBone():
     tail_id: int = field(init=False)
     bone_type: int = field(init=False)
     ik_parent_id: int = field(init=False)
-    position: Tuple[float, float, float] = field(init=False)
+    position: tuple[float, float, float] = field(init=False)
 
 
 @dataclass
@@ -42,7 +42,7 @@ class pmdpyTypeLoadIK():
     length: int = field(init=False)
     iteration: int = field(init=False)
     weight: float = field(init=False)
-    child_bone_id: List[int] = field(init=False)
+    child_bone_id: list[int] = field(init=False)
 
 
 @dataclass
@@ -50,8 +50,8 @@ class pmdpyTypeLoadSkin():
     name: str = field(init=False)
     var_size: int = field(init=False)
     type: int = field(init=False)
-    var_id: List[int] = field(init=False)
-    ver_offset: List[Tuple[float, float, float]] = field(init=False)
+    var_id: list[int] = field(init=False)
+    ver_offset: list[tuple[float, float, float]] = field(init=False)
 
 
 @dataclass
@@ -75,8 +75,8 @@ class pmdpyTypeLoadPhysicsBody():
     group_mask: str = field(init=False)
     type_id: int = field(init=False)
     sizes: pmdpyTypeLoadPhysicsBodyVector = field(init=False)
-    pos: Tuple[Any, ...] = field(init=False)
-    rot: Tuple[Any, ...] = field(init=False)
+    pos: tuple[Any, ...] = field(init=False)
+    rot: tuple[Any, ...] = field(init=False)
     mass: float = field(init=False)
     pos_dim: float = field(init=False)
     rot_dim: float = field(init=False)
@@ -90,33 +90,33 @@ class pmdpyTypeLoadPhysicsJoint():
     name: str = field(init=False)
     rigidbody_a: int = field(init=False)
     rigidbody_b: int = field(init=False)
-    pos: Tuple[Any, ...] = field(init=False)
-    rot: Tuple[Any, ...] = field(init=False)
-    constrain_pos: List[Tuple[Any, ...]] = field(init=False)
-    spring_pos: Tuple[Any, ...] = field(init=False)
-    spring_rot: Tuple[Any, ...] = field(init=False)
+    pos: tuple[Any, ...] = field(init=False)
+    rot: tuple[Any, ...] = field(init=False)
+    constrain_pos: list[tuple[Any, ...]] = field(init=False)
+    spring_pos: tuple[Any, ...] = field(init=False)
+    spring_rot: tuple[Any, ...] = field(init=False)
 
 
 @dataclass
 class pmdpyLoadPhysics():
-    body: List[pmdpyTypeLoadPhysicsBody] = field(init=False)
-    joint: List[pmdpyTypeLoadPhysicsJoint] = field(init=False)
+    body: list[pmdpyTypeLoadPhysicsBody] = field(init=False)
+    joint: list[pmdpyTypeLoadPhysicsJoint] = field(init=False)
 
 
 @dataclass
 class pmdpyTypeAdjustVertex():
-    ver: Tuple[Any, ...] = field(init=False)
-    nor: Tuple[Any, ...] = field(init=False)
-    uv: Tuple[Any, ...] = field(init=False)
-    bone_id: Tuple[Any, ...] = field(init=False)
-    bone_weight: Tuple[Any, ...] = field(init=False)
+    ver: tuple[Any, ...] = field(init=False)
+    nor: tuple[Any, ...] = field(init=False)
+    uv: tuple[Any, ...] = field(init=False)
+    bone_id: tuple[Any, ...] = field(init=False)
+    bone_weight: tuple[Any, ...] = field(init=False)
     edge: int = field(init=False)
 
 
 @dataclass
 class pmdpyTypeBone():
-    bone_me: Union[Any, int] = field(init=False)
-    bone_to: Union[Any, int] = field(init=False)
+    bone_me: Any | int = field(init=False)
+    bone_to: Any | int = field(init=False)
     len: int = field(init=False)
     iteration: int = field(init=False)
     weight: Any = field(init=False)
@@ -126,8 +126,8 @@ class pmdpyTypeBone():
 
 @dataclass
 class pmdpyTypeAdjustIK():
-    bone_me: Union[Any, int] = field(init=False)
-    bone_to: Union[Any, int] = field(init=False)
+    bone_me: Any | int = field(init=False)
+    bone_to: Any | int = field(init=False)
     len: int = field(init=False)
     iteration: int = field(init=False)
     weight: Any = field(init=False)
@@ -147,22 +147,22 @@ class pmdpyType():
     comment: str = field(default="")
 
     # load file struct
-    vertex: List[pmdpyTypeLoadVertex] = field(init=False)
-    face: List[Tuple[int, int, int]] = field(init=False)
-    material: List[pmdpyTypeLoadMaterial] = field(init=False)
-    bone: List[pmdpyTypeLoadBone] = field(init=False)
-    ik: List[pmdpyTypeLoadIK] = field(init=False)
-    skin: List[pmdpyTypeLoadSkin] = field(init=False)
-    skin_name: List[int] = field(init=False)
-    bone_frame_name: List[str] = field(init=False)
-    bone_number: List[pmdpyTypeLoadBoneName] = field(init=False)
+    vertex: list[pmdpyTypeLoadVertex] = field(init=False)
+    face: list[tuple[int, int, int]] = field(init=False)
+    material: list[pmdpyTypeLoadMaterial] = field(init=False)
+    bone: list[pmdpyTypeLoadBone] = field(init=False)
+    ik: list[pmdpyTypeLoadIK] = field(init=False)
+    skin: list[pmdpyTypeLoadSkin] = field(init=False)
+    skin_name: list[int] = field(init=False)
+    bone_frame_name: list[str] = field(init=False)
+    bone_number: list[pmdpyTypeLoadBoneName] = field(init=False)
 
     english_flag: bool = field(init=False)
-    english_head: Dict[str, str] = field(init=False)
-    bone_name_eng: List[str] = field(init=False)
-    skin_name_eng: List[str] = field(init=False)
-    bone_disp_name_eng: List[str] = field(init=False)
+    english_head: dict[str, str] = field(init=False)
+    bone_name_eng: list[str] = field(init=False)
+    skin_name_eng: list[str] = field(init=False)
+    bone_disp_name_eng: list[str] = field(init=False)
 
-    toon_name: List[str] = field(init=False)
+    toon_name: list[str] = field(init=False)
     physics_flag: bool = field(init=False)
-    physics: Union[None, pmdpyLoadPhysics] = field(init=False)
+    physics: None | pmdpyLoadPhysics = field(init=False)

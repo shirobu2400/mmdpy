@@ -4,11 +4,11 @@ import os
 from . import mmdpy_texture
 from . import mmdpy_type
 from . import pmdpy_type
-from typing import Any, cast, Union
+from typing import Any, cast
 
 
 # #### #### PMD Adjuster #### ####
-def adjust(pmd_data: pmdpy_type.pmdpyType) -> Union[None, mmdpy_type.mmdpyTypeModel]:
+def adjust(pmd_data: pmdpy_type.pmdpyType) -> None | mmdpy_type.mmdpyTypeModel:
 
     adjust_data = mmdpy_type.mmdpyTypeModel()
 
