@@ -13,7 +13,7 @@ setup(
     name="mmdpy",
     packages=["mmdpy", "mmdpy_world"],
     version="0.0.1",
-    license="MIT",
+    license="MIT AND (Apache-2.0 OR BSD-2-Clause)",
     author='shirobu2400',
     author_email='shirobuwq2400kskm@gmail.com',
     url='https://github.com/shirobu2400/mmdpy',

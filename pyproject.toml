@@ -1,0 +1,21 @@
+[project]
+name = "mmdpy"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "glfw>=2.8.0",
+    "mypy>=1.15.0",
+    "numpy>=2.2.4",
+    "pillow>=11.1.0",
+    "pybullet>=3.2.7",
+    "pyopengl>=3.1.9",
+    "pyopengl-accelerate>=3.1.9",
+    "scipy>=1.15.2",
+    "setuptools>=77.0.3",
+]
+
+[tool.uv]
+package = true
+

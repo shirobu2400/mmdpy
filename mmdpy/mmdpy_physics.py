@@ -15,7 +15,7 @@ class mmdpyPhysics:
         self.joints: list[mmdpy_type.mmdpyTypePhysicsJoint] = joints
 
         # debug mode.
-        debug_print: bool = True
+        debug_print: bool = False
 
         self.b2gl_p_scale: float = 0.50
         self.gl2b_p_scale: float = 1.00 / self.b2gl_p_scale
@@ -59,6 +59,7 @@ class mmdpyPhysics:
                 cid = pybullet.createCollisionShape(pybullet.GEOM_SPHERE,
                                                     radius=body.sizes[0],
                                                     physicsClientId=self.physics_engine)
+                body.calc = 0
 
             # モデルから反映するボーンは重さ０とする
             if body.calc == 0:
@@ -125,7 +126,7 @@ class mmdpyPhysics:
         self._update_bones(self.update_bodies)
 
         # リアルタイム
-        pybullet.setRealTimeSimulation(1)
+        pybullet.setRealTimeSimulation(0)
 
         self._set_origin_bones(self.origin_bodies)
 
@@ -163,8 +164,8 @@ class mmdpyPhysics:
     def run(self) -> None:
         self._set_origin_bones(self.origin_bodies)
 
-        # # run simulation
-        # pybullet.stepSimulation(self.physics_engine)
+        # run simulation
+        pybullet.stepSimulation(self.physics_engine)
 
         self._update_bones(self.update_bodies)
 

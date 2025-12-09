@@ -1,11 +1,11 @@
 mypy
 scipy
-# numba
 numpy
 PyOpenGL
 PyOpenGL_accelerate
 pybullet
 # PyODE
 Pillow
-# pillow-simd
 glfw
+pyrender
+

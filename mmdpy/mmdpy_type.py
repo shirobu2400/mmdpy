@@ -110,7 +110,7 @@ class mmdpyTypePhysics():
     joint: list[mmdpyTypePhysicsJoint] = field(init=False)
 
 
-@dataclass
+# @dataclass 
 class glslInfoClass():
     glsl_vao: Any = field(init=False)
     face_size: int = field(init=False)

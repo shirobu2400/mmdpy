@@ -138,9 +138,15 @@ class model:
         if not self.data:
             self.file_type = "None"
             return False
+
+        # model create
         self.model.set_model(self.data)
+
+        # bone reset
         self.model.update_bone()
-        # self.model.create_physics(self.data.physics_flag, self.data)
+
+        # physics
+        self.model.create_physics(self.data.physics_flag, self.data)
 
         self.runnable = True
         return True
@@ -158,7 +164,7 @@ class model:
             return self
 
         self.model.update_bone()
-        self.model.update_physics()
+        # self.model.update_physics()
         self.model.draw()
 
         # bone 初期化

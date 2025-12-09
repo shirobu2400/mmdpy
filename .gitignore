@@ -9,6 +9,7 @@ py3.9
 .python-version
 
 mmdpy.egg-info
+*.egg-info
 dist
 build
 

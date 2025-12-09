@@ -1,6 +1,7 @@
 from . import mmdpy_root
 import OpenGL
 import OpenGL.GL as gl
+import OpenGL.GL.shaders as gls
 import numpy as np
 from typing import Any, cast
 from . import mmdpy_type
@@ -136,7 +137,7 @@ class mmdpyShader:
 
     def compile(self) -> bool:
         vertex_shader_src = """
-            #version 110
+            // #version 110
             // uniform     mat4    ProjectionMatrix;
             mat4                ProjectionMatrix = gl_ModelViewProjectionMatrix;
             attribute   vec3    Vertex;
@@ -166,7 +167,7 @@ class mmdpyShader:
         """ % (MMDPY_MATERIAL_USING_BONE_NUM)
 
         fragment_shader_src = """
-            #version 110
+            // #version 110
             uniform     sampler2D   Texture01;
             varying     vec2        ShareUV;
             varying     vec4        ShareColor;
